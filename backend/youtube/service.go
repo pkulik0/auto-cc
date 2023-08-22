@@ -23,6 +23,7 @@ func newService(rdb *redis.Client, oauth2Config *oauth2.Config) Service {
 func (s *Service) registerEndpoints(app *fiber.App) {
 	app.Get("/auth", s.authHandler)
 	app.Get("/callback", s.callbackHandler)
+
 	app.Use(s.authMiddleware)
 
 	app.Get("/videos", s.videosHandler)
@@ -64,6 +65,12 @@ func (s *Service) videosHandler(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
+
+	_, err = s.addToQuota(100)
+	if err != nil {
+		log.Errorf("Failed to increment quota: %s", err)
+	}
+
 	return ctx.JSON(res)
 }
 
@@ -82,6 +89,11 @@ func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
 	res, err := youtubeClient.Captions.List([]string{"id"}, videoId).Do()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
+	}
+
+	_, err = s.addToQuota(50)
+	if err != nil {
+		log.Errorf("Failed to increment quota: %s", err)
 	}
 
 	return ctx.JSON(res)
