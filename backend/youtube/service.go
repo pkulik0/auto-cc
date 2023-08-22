@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/youtube/v3"
 )
 
 type Service struct {
@@ -24,19 +25,18 @@ func (s *Service) registerEndpoints(app *fiber.App) {
 	app.Get("/callback", s.callbackHandler)
 	app.Use(s.authMiddleware)
 
-	app.Get("/test", func(ctx *fiber.Ctx) error {
-		return ctx.SendString("TEST")
-	})
+	app.Get("/videos", s.videosHandler)
+	app.Get("/videos/:videoId/cc", s.ccListHandler)
 }
 
 func (s *Service) callbackHandler(ctx *fiber.Ctx) error {
 	code := ctx.Query("code")
 	state := ctx.Query("state")
 	if code == "" || state == "" {
-		return ctx.Status(fiber.StatusBadRequest).SendString("Missing oauth2 data.")
+		return ctx.Status(fiber.StatusBadRequest).SendString("Missing oauth2 code/state.")
 	}
 
-	token, err := exchangeToken(s.oauth2Config, code, state)
+	token, err := exchangeToken(ctx.Context(), s.oauth2Config, code, state)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Failed to exchange token.")
 	}
@@ -53,14 +53,36 @@ func (s *Service) authHandler(ctx *fiber.Ctx) error {
 	return ctx.Redirect(url, fiber.StatusFound)
 }
 
-func (s *Service) authMiddleware(ctx *fiber.Ctx) error {
-	token, err := getTokenFromCache(s.rdb)
-	if err != nil {
-		log.Error(err)
-		return ctx.Status(fiber.StatusUnauthorized).SendString("No oauth2 token found.")
+func (s *Service) videosHandler(ctx *fiber.Ctx) error {
+	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
+	if !ok {
+		log.Error("Failed to get oauth2Client from locals.")
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
 	}
 
-	log.Info("?")
-	ctx.Locals("token", token)
-	return ctx.Next()
+	res, err := youtubeClient.Search.List([]string{"snippet"}).ForMine(true).MaxResults(50).Type("video").Do()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
+	}
+	return ctx.JSON(res)
+}
+
+func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
+	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
+	if !ok {
+		log.Error("Failed to get oauth2Client from locals.")
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
+	}
+
+	videoId := ctx.Params("videoId")
+	if videoId == "" {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Missing video id.")
+	}
+
+	res, err := youtubeClient.Captions.List([]string{"id"}, videoId).Do()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
+	}
+
+	return ctx.JSON(res)
 }

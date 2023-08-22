@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/gofiber/fiber/v2/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/youtube/v3"
@@ -23,7 +22,7 @@ func getOAuth2Config() *oauth2.Config {
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectUri,
-		Scopes:       []string{youtube.YoutubeReadonlyScope},
+		Scopes:       []string{youtube.YoutubeForceSslScope},
 		Endpoint:     google.Endpoint,
 	}
 }
@@ -54,18 +53,11 @@ func getTokenFromCache(rdb *redis.Client) (*oauth2.Token, error) {
 	return token, nil
 }
 
-func exchangeToken(config *oauth2.Config, code string, state string) (*oauth2.Token, error) {
-	token, err := config.Exchange(context.TODO(), code)
+func exchangeToken(ctx context.Context, config *oauth2.Config, code string, state string) (*oauth2.Token, error) {
+	token, err := config.Exchange(ctx, code)
 	if err != nil {
 		return nil, err
 	}
 
 	return token, nil
-}
-
-func getNewToken(config *oauth2.Config) *oauth2.Token {
-	url := config.AuthCodeURL("stateTODO", oauth2.AccessTypeOffline)
-	log.Infof("URL: %s", url)
-
-	return nil
 }
