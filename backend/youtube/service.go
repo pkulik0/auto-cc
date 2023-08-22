@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/youtube/v3"
+	"io"
 )
 
 type Service struct {
@@ -28,6 +29,7 @@ func (s *Service) registerEndpoints(app *fiber.App) {
 
 	app.Get("/videos", s.videosHandler)
 	app.Get("/videos/:videoId/cc", s.ccListHandler)
+	app.Get("/cc/:ccId", s.ccDownloadHandler)
 }
 
 func (s *Service) callbackHandler(ctx *fiber.Ctx) error {
@@ -86,7 +88,7 @@ func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Missing video id.")
 	}
 
-	res, err := youtubeClient.Captions.List([]string{"id"}, videoId).Do()
+	res, err := youtubeClient.Captions.List([]string{"id", "snippet"}, videoId).Do()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
@@ -97,4 +99,35 @@ func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(res)
+}
+
+func (s *Service) ccDownloadHandler(ctx *fiber.Ctx) error {
+	ccId := ctx.Params("ccId")
+	if ccId == "" {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Missing ccId.")
+	}
+
+	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
+	if !ok {
+		log.Error("Failed to get oauth2Client from locals.")
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
+	}
+
+	res, err := youtubeClient.Captions.Download(ccId).Download()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
+	}
+
+	_, err = s.addToQuota(200)
+	if err != nil {
+		log.Errorf("Failed to increment quota: %s", err)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to read parse response.")
+	}
+	_ = res.Body.Close()
+
+	return ctx.Send(body)
 }
