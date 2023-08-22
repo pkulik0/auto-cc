@@ -27,4 +27,11 @@ func main() {
 		return
 	}
 	log.Info(languages)
+
+	usageInfo, err := deeplClient.GetUsage()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Info(usageInfo)
 }
