@@ -1,4 +1,4 @@
-module github.com/pkulik0/autocc
+module github.com/pkulik0/autocc/youtube
 
 go 1.20
 
