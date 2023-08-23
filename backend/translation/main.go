@@ -1,44 +1,54 @@
 package main
 
 import (
+	"github.com/go-redis/redis"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkulik0/autocc/translation/deepl"
 	"os"
 )
 
+func getReqEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Environment variable %s is not set!", key)
+	}
+	return value
+}
+
+func setupRedis() *redis.Client {
+	url := getReqEnv("REDIS_URL")
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		log.Fatal("Failed to parse REDIS_URL")
+	}
+
+	log.Debugf("Connecting to redis on %s", opts.Addr)
+	return redis.NewClient(opts)
+}
+
 func main() {
+	port := getReqEnv("PORT")
+	apiKey := getReqEnv("DEEPL_API_KEY")
 	apiUrl := os.Getenv("DEEPL_API_URL")
 	if apiUrl == "" {
 		apiUrl = "https://api-free.deepl.com/v2"
 		log.Infof("DEEPL_API_URL not set. Using default: %s", apiUrl)
 	}
 
-	apiKey := os.Getenv("DEEPL_API_KEY")
-	if apiKey == "" {
-		log.Fatal("DEEPL_API_KEY not set")
-	}
+	app := fiber.New()
+	app.Use(logger.New())
 
 	deeplClient := deepl.NewDeepL(apiUrl, apiKey)
+	rdb := setupRedis()
 
-	languages, err := deeplClient.GetLanguages(deepl.TargetLanguages)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Info(languages)
+	service := NewService(deeplClient, rdb)
+	service.registerEndpoint(app)
 
-	usageInfo, err := deeplClient.GetUsage()
+	err := app.Listen(":" + port)
 	if err != nil {
-		log.Error(err)
-		return
+		log.Fatalf("Failed to listen on port %s: %s", port, err)
 	}
-	log.Info(usageInfo)
-
-	translated, err := deeplClient.Translate([]string{"co ty robisz?", "weź się zastanów"}, "PL", "EN-US")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("%#v", translated)
 }
