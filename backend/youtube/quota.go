@@ -17,16 +17,16 @@ func getQuotaResetTime() time.Time {
 	return nextMidnight
 }
 
-func (s *Service) addToQuota(usedPoints int64) (int64, error) {
+func (s *Service) addToQuota(usedPoints int64) int64 {
 	currentlyUsed, err := s.rdb.IncrBy(quotaCacheKey, usedPoints).Result()
 	if err != nil {
-		return 0, err
+		log.Errorf("Failed to increment quota: %s", err)
+		return 0
 	}
 
 	if err := s.rdb.ExpireAt(quotaCacheKey, getQuotaResetTime()).Err(); err != nil {
 		log.Errorf("Failed to set expiry on key \"%s\": %s", quotaCacheKey, err)
-		return currentlyUsed, nil
 	}
 
-	return currentlyUsed, nil
+	return currentlyUsed
 }
