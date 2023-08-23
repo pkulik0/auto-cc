@@ -11,7 +11,7 @@ type Service struct {
 	rdb         *redis.Client
 }
 
-func NewService(deeplClient *deepl.DeepL, rdb *redis.Client) *Service {
+func newService(deeplClient *deepl.DeepL, rdb *redis.Client) *Service {
 	return &Service{
 		deeplClient: deeplClient,
 		rdb:         rdb,
@@ -20,6 +20,7 @@ func NewService(deeplClient *deepl.DeepL, rdb *redis.Client) *Service {
 
 func (s *Service) registerEndpoint(app *fiber.App) {
 	app.Get("/languages", s.languagesHandler)
+	app.Get("/translate", s.translateHandler)
 }
 
 func (s *Service) languagesHandler(ctx *fiber.Ctx) error {
@@ -37,4 +38,25 @@ func (s *Service) languagesHandler(ctx *fiber.Ctx) error {
 		"target": targetLangs,
 		"source": sourceLangs,
 	})
+}
+
+type translateRequest struct {
+	SourceLanguageCode string   `json:"source"`
+	TargetLanguageCode string   `json:"target"`
+	Text               []string `json:"text"`
+}
+
+func (s *Service) translateHandler(ctx *fiber.Ctx) error {
+	var requestData translateRequest
+	err := ctx.BodyParser(&requestData)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Invalid request body.")
+	}
+
+	translatedText, err := s.deeplClient.Translate(requestData.Text, requestData.SourceLanguageCode, requestData.TargetLanguageCode)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to fetch translations.")
+	}
+
+	return ctx.JSON(translatedText)
 }

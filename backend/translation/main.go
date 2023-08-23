@@ -44,7 +44,7 @@ func main() {
 	deeplClient := deepl.NewDeepL(apiUrl, apiKey)
 	rdb := setupRedis()
 
-	service := NewService(deeplClient, rdb)
+	service := newService(deeplClient, rdb)
 	service.registerEndpoint(app)
 
 	err := app.Listen(":" + port)
