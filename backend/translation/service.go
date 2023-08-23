@@ -46,11 +46,18 @@ type translateRequest struct {
 	Text               []string `json:"text"`
 }
 
+func (r *translateRequest) isValid() bool {
+	return len(r.Text) > 0 && len(r.TargetLanguageCode) >= 2 && len(r.SourceLanguageCode) >= 2
+}
+
 func (s *Service) translateHandler(ctx *fiber.Ctx) error {
 	var requestData translateRequest
 	err := ctx.BodyParser(&requestData)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Invalid request body.")
+	}
+	if !requestData.isValid() {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Invalid request data.")
 	}
 
 	translatedText, err := s.deeplClient.Translate(requestData.Text, requestData.SourceLanguageCode, requestData.TargetLanguageCode)
