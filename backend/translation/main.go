@@ -34,4 +34,11 @@ func main() {
 		return
 	}
 	log.Info(usageInfo)
+
+	translated, err := deeplClient.Translate([]string{"co ty robisz?", "weź się zastanów"}, "PL", "EN-US")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Infof("%#v", translated)
 }
