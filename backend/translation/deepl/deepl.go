@@ -1,6 +1,8 @@
 package deepl
 
 import (
+	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 )
@@ -26,5 +28,20 @@ func (d *DeepL) request(endpoint string, body io.Reader) (*http.Response, error)
 	req.Header.Set("Authorization", "DeepL-Auth-Key "+d.apiKey)
 
 	client := http.Client{}
-	return client.Do(req)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != 200 {
+		var errorResponse struct {
+			Message string
+		}
+		if err := json.NewDecoder(res.Body).Decode(&errorResponse); err != nil {
+			return nil, err
+		}
+		return nil, errors.New("deepl api error: " + errorResponse.Message)
+	}
+
+	return res, nil
 }
