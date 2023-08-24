@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 	"os"
@@ -35,6 +36,7 @@ func main() {
 
 	app := fiber.New()
 	app.Use(logger.New())
+	app.Use(cors.New())
 	service.registerEndpoints(app)
 
 	port := getEnv("PORT")
