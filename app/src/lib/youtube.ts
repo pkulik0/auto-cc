@@ -8,10 +8,14 @@ export interface Video {
     publishedAt: string
 }
 
-export const getVideos = async (): Promise<Video[]> => {
-    const response = await fetch(PUBLIC_YOUTUBE_URL+"/videos")
+const get = async (endpoint: string): Promise<any> => {
+    const response = await fetch(PUBLIC_YOUTUBE_URL+endpoint)
     if(!response.ok) {
-        throw new Error("Failed to fetch videos.")
+        throw new Error(`Failed to GET: ${PUBLIC_YOUTUBE_URL}${endpoint}`)
     }
     return response.json()
+}
+
+export const getVideos = async (): Promise<Video[]> => {
+    return get("/videos")
 }

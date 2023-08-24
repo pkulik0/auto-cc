@@ -1,14 +1,14 @@
 <script lang="ts">
     import {onMount} from "svelte";
-    import {getLanguages} from "$lib/languages";
-    import type {Language} from "$lib/languages";
+    import {getLanguages} from "$lib/languages/api";
+    import type {Language} from "$lib/languages/api";
+    import {selectedLanguage} from "$lib/languages/stores";
 
     let sourceLanguages: Language[] = []
-    let selectedLanguage: Language|null = null
-    $: sourceName = selectedLanguage !== null ? selectedLanguage.name : "..."
+    $: sourceName = $selectedLanguage !== null ? $selectedLanguage.name : "..."
 
     const saveLanguage = (language: Language) => {
-        selectedLanguage = language
+        selectedLanguage.set(language)
     }
 
     onMount(async () => {
