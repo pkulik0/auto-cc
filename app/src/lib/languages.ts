@@ -1,5 +1,4 @@
-import axios from "axios";
-import {PUBLIC_API_URL} from "$env/static/public";
+import {PUBLIC_LANG_URL} from "$env/static/public";
 
 export interface Language {
     name: string
@@ -12,9 +11,9 @@ interface LanguagesResponse {
 }
 
 export const getLanguages = async (): Promise<LanguagesResponse> => {
-    const response = await axios.get<LanguagesResponse>(PUBLIC_API_URL+"/languages")
-    if(response.status != 200) {
-        throw new Error("Couldn't fetch available languages.")
+    const response = await fetch(PUBLIC_LANG_URL+"/languages")
+    if(!response.ok) {
+        throw new Error("Failed to fetch available languages.")
     }
-    return response.data
+    return response.json()
 }
