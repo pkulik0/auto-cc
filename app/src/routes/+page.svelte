@@ -1,16 +1,15 @@
 <script lang="ts">
-    import type {Video} from "$lib/youtube";
+    import type {Video} from "$lib/youtube/api";
     import {onMount} from "svelte";
-    import {getVideos} from "$lib/youtube";
+    import {getVideos} from "$lib/youtube/api";
+    import VideoRow from "./VideoRow.svelte";
 
     let videos: Video[] = []
 
     onMount(async () => {
         videos = await getVideos()
-        console.log(videos)
     })
 </script>
-
 
 <div class="table-responsive">
     <table class="table table-striped text-center">
@@ -25,17 +24,7 @@
         </thead>
         <tbody>
         {#each videos as video}
-            <tr>
-                <td><img alt="" src={video.thumbnailUrl} width="300"></td>
-                <td>{video.id}</td>
-                <td>{video.title}</td>
-                <td>{new Date(video.publishedAt*1000).toLocaleString()}</td>
-                <td>
-                    <button class="btn btn-primary w-100" on:click={() => console.log(video)}>
-                        Translate
-                    </button>
-                </td>
-            </tr>
+            <VideoRow {video}/>
         {/each}
         </tbody>
     </table>
