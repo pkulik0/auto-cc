@@ -1,31 +1,33 @@
 <script lang="ts">
-    import type {Video} from "$lib/youtube/api";
-    import {onMount} from "svelte";
     import {getVideos} from "$lib/youtube/api";
     import VideoRow from "./VideoRow.svelte";
 
-    let videos: Video[] = []
-
-    onMount(async () => {
-        videos = await getVideos()
-    })
+    let videosPromise = getVideos()
 </script>
 
-<div class="table-responsive">
-    <table class="table table-striped text-center">
-        <thead class="fs-5">
-        <tr>
-            <th>Thumbnail</th>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Published at</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        {#each videos as video}
-            <VideoRow {video}/>
-        {/each}
-        </tbody>
-    </table>
-</div>
+{#await videosPromise}
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border m-5" role="status"/>
+    </div>
+{:then videos}
+    <div class="table-responsive">
+        <table class="table table-striped text-center">
+            <thead class="fs-5">
+            <tr>
+                <th>Thumbnail</th>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Published at</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+                {#each videos as video}
+                    <VideoRow {video}/>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+{:catch error}
+    {error}
+{/await}

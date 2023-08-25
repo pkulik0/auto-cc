@@ -2,6 +2,7 @@
     import type {CCEntry, Video} from "$lib/youtube/api";
     import {selectedLanguage} from "$lib/languages/stores";
     import {downloadCC, getCCList} from "$lib/youtube/api";
+    import {Srt} from "$lib/srt";
 
     export let video: Video
     let videoTime = new Date(video.publishedAt*1000).toLocaleString()
@@ -14,10 +15,19 @@
         const language: string = $selectedLanguage.language.toLowerCase()
 
         const ccList: CCEntry[] = await getCCList(video.id)
-        const ccEntry: CCEntry = ccList.find(cc => cc.language === language)
+        if(!ccList) {
+            alert(`No CCs found!`)
+            return
+        }
 
-        const sourceCC: string = await downloadCC(ccEntry.id)
-        console.log(sourceCC)
+        const ccEntry: CCEntry = ccList.find(cc => cc.language === language)
+        if(!ccEntry) {
+            alert(`${$selectedLanguage.language} CC not found!`)
+        }
+
+        const srt: Srt = new Srt(await downloadCC(ccEntry.id))
+        console.log(srt)
+        console.log(srt.toString())
     }
 </script>
 
