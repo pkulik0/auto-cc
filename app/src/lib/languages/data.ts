@@ -1,6 +1,5 @@
-import {writable} from "svelte/store";
 import type {Language} from "$lib/languages/api";
-import {setSourceLanguageCode} from "$lib/languages/languages";
+import {writable} from "svelte/store";
 
 const savedLanguageKey = "selectedLanguage"
 const getSavedLanguage = (): Language|null => {
@@ -17,3 +16,14 @@ selectedLanguage.subscribe(value => {
     if(typeof window === "undefined") return
     window.localStorage.setItem(savedLanguageKey, JSON.stringify(value))
 })
+
+export let targetLanguages: string[] = []
+
+export const setTargetLanguages = (languages: Language[]) => {
+    targetLanguages = [...new Set(languages.map(language => language.language.split("-")[0]))]
+}
+
+export let sourceLanguageCode = ""
+export const setSourceLanguageCode = (code: string) => {
+    sourceLanguageCode = code
+}

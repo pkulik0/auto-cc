@@ -2,8 +2,8 @@
     import {onMount} from "svelte";
     import {getLanguages} from "$lib/languages/api";
     import type {Language} from "$lib/languages/api";
-    import {selectedLanguage} from "$lib/languages/stores";
-    import {setTargetLanguages} from "$lib/languages/languages";
+    import {selectedLanguage} from "$lib/languages/data";
+    import {setTargetLanguages} from "$lib/languages/data";
 
     onMount(async () => {
         const response = await getLanguages()

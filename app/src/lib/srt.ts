@@ -1,4 +1,4 @@
-import {sourceLanguageCode, targetLanguages} from "$lib/languages/languages";
+import {sourceLanguageCode, targetLanguages} from "$lib/languages/data";
 import {translateText} from "$lib/languages/api";
 import _ from "lodash";
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {getVideos} from "$lib/youtube/api";
-    import type {Video} from "$lib/youtube/api";
+    import {getVideos} from "$lib/youtube/video";
+    import type {Video} from "$lib/youtube/video";
     import VideoRow from "./VideoRow.svelte";
     import {onMount} from "svelte";
 
