@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 	"os"
+	"time"
 )
 
 func getEnv(key string) string {
@@ -32,19 +33,24 @@ func setupRedis() *redis.Client {
 
 func main() {
 	log.Info("Starting...")
-	service := newService(setupRedis(), getOAuth2Config())
 
 	app := fiber.New()
 	app.Use(logger.New())
 	app.Use(cors.New())
+	app.Use(cache.New(cache.Config{
+		Expiration: time.Minute * 15,
+	}))
+
+	rdb := setupRedis()
+	service := newService(rdb, getOAuth2Config())
 	service.registerEndpoints(app)
 
 	port := getEnv("PORT")
 	log.Infof("Listening on port %s", port)
-	addr := fmt.Sprintf(":%s", port)
-	if err := app.Listen(addr); err != nil {
+	if err := app.Listen(":" + port); err != nil {
 		log.Fatalf("Failed to serve app: %s", err.Error())
 	}
-
-	log.Info("Bye")
+	if err := rdb.Close(); err != nil {
+		log.Errorf("Failed to close redis connection: %s", err)
+	}
 }

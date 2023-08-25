@@ -53,4 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen on port %s: %s", port, err)
 	}
+	if err := rdb.Close(); err != nil {
+		log.Errorf("Failed to close redis connection: %s", err)
+	}
 }
