@@ -1,13 +1,10 @@
 <script lang="ts">
-    import {getVideos} from "$lib/youtube/video";
-    import type {Video} from "$lib/youtube/video";
+    import {getVideos, videos} from "$lib/youtube/video";
     import VideoRow from "./VideoRow.svelte";
     import {onMount} from "svelte";
 
-    let videos: Video[] = []
-
     onMount(async () => {
-        videos = await getVideos()
+        videos.set(await getVideos())
     })
 </script>
 
@@ -23,7 +20,7 @@
         </tr>
         </thead>
         <tbody>
-            {#each videos as video}
+            {#each $videos as video}
                 <VideoRow {video}/>
             {/each}
         </tbody>
