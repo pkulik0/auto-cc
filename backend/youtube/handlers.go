@@ -121,7 +121,7 @@ func (s *Service) ccDownloadHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
 	}
 
-	res, err := youtubeClient.Captions.Download(ccId).Download()
+	res, err := youtubeClient.Captions.Download(ccId).Tfmt("srt").Download()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
