@@ -27,7 +27,6 @@
 
         const srt: Srt = new Srt(await downloadCC(ccEntry.id))
         console.log(srt)
-        console.log(srt.toString())
     }
 </script>
 

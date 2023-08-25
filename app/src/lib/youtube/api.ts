@@ -34,5 +34,5 @@ export const downloadCC = async (ccId: string): Promise<string> => {
     if(!response.ok) {
         throw new Error(`Failed to download CC with id ${ccId}`)
     }
-    return response.text()
+    return (await response.text()).trimEnd()
 }
