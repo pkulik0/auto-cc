@@ -19,14 +19,21 @@ export const getLanguages = async (): Promise<LanguagesResponse> => {
 }
 
 export const translateText = async (text: string[], sourceLanguageCode: string, targetLanguageCode: string): Promise<string[]> => {
+    const body = JSON.stringify({
+        "text": text,
+        "source": sourceLanguageCode,
+        "target": targetLanguageCode,
+    })
+
     const response = await fetch(PUBLIC_LANG_URL+"/translate", {
-        body: JSON.stringify({
-            "text": text,
-            "source": sourceLanguageCode,
-            "target": targetLanguageCode,
-        })
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: body,
     })
     if(!response.ok) {
+        console.log(await response.text())
         throw new Error("Failed to translate text")
     }
     return response.json()

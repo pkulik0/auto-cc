@@ -2,31 +2,30 @@
     import type {CCEntry, Video} from "$lib/youtube/api";
     import {selectedLanguage} from "$lib/languages/stores";
     import {downloadCC, getCCList} from "$lib/youtube/api";
-    import {Srt} from "$lib/srt";
+    import {Srt, translateSrt} from "$lib/srt";
 
     export let video: Video
     let videoTime = new Date(video.publishedAt*1000).toLocaleString()
 
     const translate = async () => {
         if(!$selectedLanguage) {
-            alert("Choose a source language!")
-            return
+            throw new Error("No source language selected.")
         }
         const language: string = $selectedLanguage.language.toLowerCase()
 
         const ccList: CCEntry[] = await getCCList(video.id)
         if(!ccList) {
-            alert(`No CCs found!`)
-            return
+            throw new Error("No CCs found.")
         }
 
         const ccEntry: CCEntry = ccList.find(cc => cc.language === language)
         if(!ccEntry) {
-            alert(`${$selectedLanguage.language} CC not found!`)
+            throw new Error(`${$selectedLanguage.language} CC not found!`)
         }
 
         const srt: Srt = new Srt(await downloadCC(ccEntry.id))
-        console.log(srt)
+        const translatedSrts: Srt[] = await translateSrt(srt)
+        console.log(translatedSrts)
     }
 </script>
 

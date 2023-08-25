@@ -1,3 +1,7 @@
+import {sourceLanguageCode, targetLanguages} from "$lib/languages/languages";
+import {translateText} from "$lib/languages/api";
+import _ from "lodash";
+
 interface SrtLine {
     id: string
     time: string
@@ -31,4 +35,21 @@ export class Srt {
         }
         return srtString
     }
+}
+
+export const translateSrt = async (srt: Srt) => {
+    const srtText = srt.lines.map(line => line.text)
+
+    const promises = targetLanguages.map(targetLanguageCode => {
+        return translateText(srtText, sourceLanguageCode, targetLanguageCode)
+    })
+    const translatedTexts = await Promise.all(promises)
+
+    return translatedTexts.map(text => {
+        let newSrt = _.cloneDeep(srt)
+        for (const [index, line] of text.entries()) {
+            newSrt.lines[index].text = line
+        }
+        return newSrt
+    })
 }

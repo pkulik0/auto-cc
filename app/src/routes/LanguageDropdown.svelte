@@ -3,22 +3,26 @@
     import {getLanguages} from "$lib/languages/api";
     import type {Language} from "$lib/languages/api";
     import {selectedLanguage} from "$lib/languages/stores";
+    import {setTargetLanguages} from "$lib/languages/languages";
 
-    let sourceLanguages: Language[] = []
-    $: sourceName = $selectedLanguage !== null ? $selectedLanguage.name : "..."
+    onMount(async () => {
+        const response = await getLanguages()
+        sourceLanguages = response.source
+        setTargetLanguages(response.target)
+    })
 
     const saveLanguage = (language: Language) => {
         selectedLanguage.set(language)
     }
 
-    onMount(async () => {
-        sourceLanguages = (await getLanguages()).source
-    })
+    let sourceLanguages: Language[] = []
+    $: sourceLanguageName = $selectedLanguage !== null ? $selectedLanguage.name : "..."
+
 </script>
 
 <div class="dropdown">
     <button class="btn btn-outline-warning dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-        Translate from {sourceName}
+        Translate from {sourceLanguageName}
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         {#each sourceLanguages as language}
