@@ -1,5 +1,5 @@
 import type {Video} from "$lib/youtube/video";
-import {Srt, translateSrt} from "$lib/srt";
+import {Srt, translateSrt} from "$lib/youtube/srt";
 import type {Language} from "$lib/languages/api";
 import {PUBLIC_YOUTUBE_URL} from "$env/static/public";
 

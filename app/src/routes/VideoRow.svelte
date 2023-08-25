@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type {CCEntry, Video} from "$lib/youtube/video";
-    import {selectedLanguage} from "$lib/languages/stores";
+    import type {Video} from "$lib/youtube/video";
+    import {selectedLanguage} from "$lib/languages/data";
     import {translateVideoCC} from "$lib/youtube/cc";
 
     export let video: Video
