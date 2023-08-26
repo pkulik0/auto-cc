@@ -20,7 +20,7 @@
 
 </script>
 
-<div class="dropdown">
+<div class="dropdown m-1">
     <button class="btn btn-outline-warning dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
         Translate from {sourceLanguageName}
     </button>

@@ -33,7 +33,6 @@ export const getVideos = async (fresh = false, next = false): Promise<Video[]> =
     const videosResponse: VideosResponse = await response.json()
     nextPageToken.set(videosResponse.nextPageToken)
 
-    console.log(videosResponse)
     return videosResponse.videos.filter(v => !v.description.includes("#short"))
 }
 

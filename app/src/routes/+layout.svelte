@@ -12,7 +12,7 @@
     <div class="container-fluid">
         <div class="navbar-brand">AutoCC</div>
         <div class="navbar-nav">
-            <button class="btn btn-warning mx-2" on:click={refreshVideos}>Refresh videos</button>
+            <button class="btn btn-warning m-1" on:click={refreshVideos}>Refresh videos</button>
             <LanguageDropdown/>
         </div>
     </div>

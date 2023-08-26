@@ -18,8 +18,8 @@
     <table class="table table-striped text-center">
         <thead class="fs-5">
         <tr>
-            <th>Thumbnail</th>
-            <th>Title</th>
+            <th class="w-25">Thumbnail</th>
+            <th class="w-50">Title</th>
             <th>Published at</th>
             <th>Actions</th>
         </tr>

@@ -16,8 +16,8 @@
 </script>
 
 <tr class="align-middle">
-    <td><img alt="" width="300" src={video.thumbnailUrl}></td>
-    <td>{video.title}</td>
+    <td><img alt="" class="w-75 p-3" src={video.thumbnailUrl}></td>
+    <td class="lead">{video.title}</td>
     <td>{videoTime}</td>
     <td>
         <button on:click={translate} class="btn btn-primary w-100">
