@@ -8,13 +8,19 @@ import (
 )
 
 func (s *Service) authMiddleware(ctx *fiber.Ctx) error {
-	token, err := getTokenFromCache(s.rdb)
+	identity, err := s.Identity()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Identity error.")
+	}
+
+	token, err := getTokenFromCache(s.rdb, identity)
 	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).SendString("No access.")
 	}
 
-	tokenSource := s.oauth2Config.TokenSource(ctx.Context(), token)
-	tokenWrapper := NewTokenWrapper(s.rdb, tokenSource)
+	config := identity.getOAuth2Config()
+	tokenSource := config.TokenSource(ctx.Context(), token)
+	tokenWrapper := NewTokenWrapper(s.rdb, tokenSource, identity)
 
 	oauth2Client := oauth2.NewClient(ctx.Context(), tokenWrapper)
 	youtubeClient, err := youtube.NewService(ctx.Context(), option.WithHTTPClient(oauth2Client))

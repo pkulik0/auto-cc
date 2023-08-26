@@ -1,11 +1,20 @@
 package main
 
 import (
+	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2/log"
+	"strconv"
 	"time"
 )
 
-const quotaCacheKey string = "youtube-quota"
+const (
+	quotaCacheKey             = "quota_"
+	quotaLimit                = 10000
+	quotaCostVideos           = 100
+	quotaCostListCaptions     = 50
+	quotaCostDownloadCaptions = 200
+	quotaCostInsertCaptions   = 400
+)
 
 func getQuotaResetTime() time.Time {
 	nowLocal := time.Now()
@@ -17,16 +26,71 @@ func getQuotaResetTime() time.Time {
 	return nextMidnight
 }
 
-func (s *Service) addToQuota(usedPoints int64) int64 {
-	currentlyUsed, err := s.rdb.IncrBy(quotaCacheKey, usedPoints).Result()
+func (s *Service) addToQuota(usedPoints int64) (int64, error) {
+	identity, err := s.Identity()
 	if err != nil {
-		log.Errorf("Failed to increment quota: %s", err)
-		return 0
+		return 0, nil
+	}
+	identityHash := identity.Hash()
+
+	currentlyUsed, err := s.rdb.IncrBy(quotaCacheKey+identityHash, usedPoints).Result()
+	if err != nil {
+		return 0, err
 	}
 
-	if err := s.rdb.ExpireAt(quotaCacheKey, getQuotaResetTime()).Err(); err != nil {
+	if err := s.rdb.ExpireAt(quotaCacheKey+identityHash, getQuotaResetTime()).Err(); err != nil {
 		log.Errorf("Failed to set expiry on key \"%s\": %s", quotaCacheKey, err)
 	}
 
-	return currentlyUsed
+	return currentlyUsed, nil
+}
+
+func (s *Service) getQuota(identityHash string) (uint64, error) {
+	cachedValue, err := s.rdb.Get(quotaCacheKey + identityHash).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	parsedValue, err := strconv.ParseUint(cachedValue, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return parsedValue, nil
+}
+
+func (s *Service) checkQuotaAndRotateIdentity(neededPoints uint64) error {
+	identity, err := s.Identity()
+	if err != nil {
+		return err
+	}
+
+	var seenHashes []string
+	for {
+		identityHash := identity.Hash()
+
+		for _, seenHash := range seenHashes {
+			if seenHash != identityHash {
+				continue
+			}
+			panic("No more identities under quota limit")
+		}
+		seenHashes = append(seenHashes, identityHash)
+
+		quotaUsage, err := s.getQuota(identityHash)
+		if err != nil {
+			return err
+		}
+		if quotaUsage+neededPoints <= quotaLimit {
+			return nil
+		}
+
+		identity, err = s.nextIdentity()
+		if err != nil {
+			return err
+		}
+	}
 }

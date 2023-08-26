@@ -4,12 +4,10 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 	"os"
-	"time"
 )
 
 func getEnv(key string) string {
@@ -32,20 +30,13 @@ func setupRedis() *redis.Client {
 }
 
 func main() {
-	log.Info("Starting...")
+	rdb := setupRedis()
 
 	app := fiber.New()
 	app.Use(logger.New())
 	app.Use(cors.New())
-	app.Use(cache.New(cache.Config{
-		Expiration: time.Minute * 15,
-		KeyGenerator: func(ctx *fiber.Ctx) string {
-			return ctx.Path() + ctx.Query("token")
-		},
-	}))
 
-	rdb := setupRedis()
-	service := newService(rdb, getOAuth2Config())
+	service := newService(rdb)
 	service.registerEndpoints(app)
 
 	port := getEnv("PORT")
