@@ -11,6 +11,7 @@
 <nav class="navbar navbar-expand-lg bg-primary mb-2">
     <div class="container-fluid">
         <div class="navbar-brand">AutoCC</div>
+
         <div class="navbar-nav">
             <button class="btn btn-warning m-1" on:click={refreshVideos}>Refresh videos</button>
             <LanguageDropdown/>

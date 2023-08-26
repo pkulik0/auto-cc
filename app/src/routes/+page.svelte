@@ -3,6 +3,7 @@
     import type {Video} from "$lib/youtube/video";
     import VideoRow from "./VideoRow.svelte";
     import {onMount} from "svelte";
+    import Identities from "./Identities.svelte";
 
     onMount(async () => {
         videos.set(await getVideos())
@@ -14,13 +15,15 @@
     }
 </script>
 
+<Identities/>
+
 <div class="table-responsive mt-4">
     <table class="table table-striped text-center">
         <thead class="fs-5">
         <tr>
             <th class="w-25">Thumbnail</th>
             <th class="w-50">Title</th>
-            <th>Published at</th>
+            <th>Date</th>
             <th>Actions</th>
         </tr>
         </thead>
