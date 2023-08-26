@@ -39,6 +39,9 @@ func main() {
 	app.Use(cors.New())
 	app.Use(cache.New(cache.Config{
 		Expiration: time.Minute * 15,
+		KeyGenerator: func(ctx *fiber.Ctx) string {
+			return ctx.Path() + ctx.Query("token")
+		},
 	}))
 
 	rdb := setupRedis()

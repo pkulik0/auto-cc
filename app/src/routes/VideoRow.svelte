@@ -4,7 +4,7 @@
     import {translateVideoCC} from "$lib/youtube/cc";
 
     export let video: Video
-    let videoTime = new Date(video.publishedAt*1000).toLocaleString()
+    let videoTime = new Date(video.publishedAt).toLocaleString()
 
     const translate = async () => {
         if(!$selectedLanguage) {

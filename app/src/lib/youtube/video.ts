@@ -9,14 +9,32 @@ export interface Video {
     publishedAt: string
 }
 
-export const getVideos = async (fresh = false): Promise<Video[]> => {
-    const response = await fetch(PUBLIC_YOUTUBE_URL+"/videos", {
+interface VideosResponse {
+    videos: Video[],
+    nextPageToken: string
+}
+
+export const nextPageToken = writable<string>("")
+
+export const getVideos = async (fresh = false, next = false): Promise<Video[]> => {
+    let url = PUBLIC_YOUTUBE_URL+"/videos"
+
+    let token = ""
+    nextPageToken.subscribe(s => token = s)()
+    if(next && token) url += "?token=" + token
+
+    const response = await fetch(url, {
         headers: fresh ? { "Cache-Control": "no-cache" } : {}
     })
     if(!response.ok) {
         throw new Error(`Failed to fetch videos`)
     }
-    return response.json()
+
+    const videosResponse: VideosResponse = await response.json()
+    nextPageToken.set(videosResponse.nextPageToken)
+
+    console.log(videosResponse)
+    return videosResponse.videos.filter(v => !v.description.includes("#short"))
 }
 
 export const videos = writable<Video[]>([])

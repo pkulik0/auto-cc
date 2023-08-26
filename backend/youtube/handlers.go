@@ -48,7 +48,12 @@ func (s *Service) videosHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
 	}
 
-	res, err := youtubeClient.Search.List([]string{"snippet"}).ForMine(true).MaxResults(50).Type("video").Do()
+	req := youtubeClient.Search.List([]string{"snippet"}).ForMine(true).MaxResults(50).Type("video")
+	if pageToken := ctx.Query("token"); pageToken != "" {
+		req = req.PageToken(pageToken)
+	}
+
+	res, err := req.Do()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
@@ -66,12 +71,15 @@ func (s *Service) videosHandler(ctx *fiber.Ctx) error {
 			Title:        raw.Snippet.Title,
 			ThumbnailUrl: raw.Snippet.Thumbnails.Maxres.Url,
 			Description:  raw.Snippet.Description,
-			PublishedAt:  publicationTime.Unix(),
+			PublishedAt:  publicationTime.UnixMilli(),
 		}
 		videos = append(videos, video)
 	}
 
-	return ctx.JSON(videos)
+	return ctx.JSON(fiber.Map{
+		"videos":        videos,
+		"nextPageToken": res.NextPageToken,
+	})
 }
 
 type ClosedCaptions struct {
