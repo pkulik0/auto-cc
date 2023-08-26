@@ -15,9 +15,8 @@
     }
 </script>
 
-<tr>
+<tr class="align-middle">
     <td><img alt="" width="300" src={video.thumbnailUrl}></td>
-    <td>{video.id}</td>
     <td>{video.title}</td>
     <td>{videoTime}</td>
     <td>
