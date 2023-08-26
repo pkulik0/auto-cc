@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"golang.org/x/oauth2"
@@ -42,11 +43,7 @@ type Video struct {
 }
 
 func (s *Service) videosHandler(ctx *fiber.Ctx) error {
-	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
-	if !ok {
-		log.Error("Failed to get oauth2Client from locals.")
-		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
-	}
+	youtubeClient := ctx.Locals("youtubeClient").(*youtube.Service)
 
 	req := youtubeClient.Search.List([]string{"snippet"}).ForMine(true).MaxResults(50).Type("video")
 	if pageToken := ctx.Query("token"); pageToken != "" {
@@ -55,6 +52,7 @@ func (s *Service) videosHandler(ctx *fiber.Ctx) error {
 
 	res, err := req.Do()
 	if err != nil {
+		log.Errorf("YT video search failure: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
 	_ = s.addToQuota(100)
@@ -88,11 +86,7 @@ type ClosedCaptions struct {
 }
 
 func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
-	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
-	if !ok {
-		log.Error("Failed to get oauth2Client from locals.")
-		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
-	}
+	youtubeClient := ctx.Locals("youtubeClient").(*youtube.Service)
 
 	videoId := ctx.Params("videoId")
 	if videoId == "" {
@@ -101,6 +95,7 @@ func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
 
 	res, err := youtubeClient.Captions.List([]string{"id", "snippet"}, videoId).Do()
 	if err != nil {
+		log.Errorf("YT CC list request failure: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
 	_ = s.addToQuota(50)
@@ -123,23 +118,52 @@ func (s *Service) ccDownloadHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Missing ccId.")
 	}
 
-	youtubeClient, ok := ctx.Locals("youtubeClient").(*youtube.Service)
-	if !ok {
-		log.Error("Failed to get oauth2Client from locals.")
-		return ctx.Status(fiber.StatusInternalServerError).SendString("Internal error.")
-	}
+	youtubeClient := ctx.Locals("youtubeClient").(*youtube.Service)
 
 	res, err := youtubeClient.Captions.Download(ccId).Tfmt("srt").Download()
 	if err != nil {
+		log.Errorf("YT CC download failure: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
 	}
 	_ = s.addToQuota(200)
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
+		log.Errorf("YT CC download body parsing failure: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to read parse response.")
 	}
 	_ = res.Body.Close()
 
 	return ctx.Send(body)
+}
+
+func (s *Service) ccUpload(ctx *fiber.Ctx) error {
+	videoId := ctx.Params("videoId")
+	language := ctx.Query("language")
+	if language == "" {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Missing language parameter")
+	}
+
+	ccInfo := &youtube.Caption{
+		Snippet: &youtube.CaptionSnippet{
+			Language: language,
+			VideoId:  videoId,
+			Name:     language,
+		},
+	}
+	body := ctx.Body()
+	if len(body) < 1 {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Request body does not contain SRT subtitles")
+	}
+	srt := bytes.NewReader(body)
+
+	youtubeClient := ctx.Locals("youtubeClient").(*youtube.Service)
+	_, err := youtubeClient.Captions.Insert([]string{"snippet"}, ccInfo).Media(srt).Do()
+	if err != nil {
+		log.Errorf("YT CC insert failure: %s", err)
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to get yt response.")
+	}
+	_ = s.addToQuota(400)
+
+	return ctx.SendString("OK")
 }
