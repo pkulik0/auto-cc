@@ -1,16 +1,16 @@
 <script lang="ts">
-    import type {Identity} from "$lib/youtube/identities";
     import {onDestroy, onMount} from "svelte";
-    import {getIdentities} from "$lib/youtube/identities";
     import {successOrAlert} from "$lib/error";
+    import type {IdentityInfo} from "$lib/youtube/identities";
+    import {getIdentityInfos} from "$lib/youtube/identities";
 
-    let identities: Identity[] = []
+    let identityInfos: IdentityInfo[] = []
     let intervalId: number
 
     const loadIdentities = async () => {
-        identities = await getIdentities()
+        identityInfos = await getIdentityInfos()
         intervalId = setInterval(async () => {
-            identities = await getIdentities()
+            identityInfos = await getIdentityInfos()
         }, 5000)
     }
 
@@ -25,10 +25,21 @@
 
 <h5>Identities</h5>
 <div class="m-2">
-    {#each identities as identity}
-        <span class:fw-bolder={identity.isSelected}>{identity.isSelected ? "*" : ""}{identity.identityHash.slice(0, 16)}</span>
-        <div class="progress mb-4 mt-1" role="progressbar" style="height: 20px;">
-            <div class="progress-bar" style="width: {identity.usedQuota / 100}%">{identity.usedQuota}</div>
+    {#each identityInfos as identity}
+        <div class="my-2">
+            <span class:fw-bolder={identity.isSelected}>
+                {identity.isSelected ? "*" : ""}{identity.hash.slice(0, 16)}
+            </span>
+            {#if identity.authUrl}
+                <a href={identity.authUrl} target="_blank"><button class="btn btn-outline-primary w-100">Click to authenticate</button></a>
+                <br/>
+            {:else}
+                <div class="progress mb-4 mt-1" role="progressbar" style="height: 35px;">
+                    <div class="progress-bar overflow-visible" style="width: {identity.usedQuota / 100}%">
+                        <span class="mx-2">{identity.usedQuota}</span>
+                    </div>
+                </div>
+            {/if}
         </div>
     {/each}
 </div>

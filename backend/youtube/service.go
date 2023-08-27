@@ -33,7 +33,7 @@ func (s *Service) registerEndpoints(app *fiber.App) {
 	app.Get("/identities", s.getIdentitiesHandler)
 	app.Post("/identities", s.addIdentityHandler)
 
-	app.Get("/auth", s.authIdentitiesHandler)
+	app.Get("/auth", s.authUrlsHandler)
 	app.Get("/callback", s.callbackHandler)
 
 	app.Use(s.authMiddleware)

@@ -13,7 +13,7 @@
             return
         }
 
-        await successOrAlert(async () => await translateVideoCC(video, $selectedLanguage, filteredTargetLanguages))
+        await successOrAlert(async () => await translateVideoCC(video, $selectedLanguage!.language, filteredTargetLanguages))
     }
 
     const translateMetadata = async () => {

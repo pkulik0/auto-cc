@@ -172,25 +172,35 @@ func (s *Service) callbackHandler(ctx *fiber.Ctx) error {
 	return ctx.SendString("OK")
 }
 
-func (s *Service) authIdentitiesHandler(ctx *fiber.Ctx) error {
-	urls := []string{}
+type AuthUrl struct {
+	Url          string `json:"url"`
+	IdentityHash string `json:"identityHash"`
+}
+
+func (s *Service) authUrlsHandler(ctx *fiber.Ctx) error {
+	authUrls := []AuthUrl{}
+
 	err := s.forEachIdentity(func(identity *Identity) error {
-		if _, err := s.rdb.Get(tokenCacheKey + identity.Hash()).Result(); err != nil {
-			if err != redis.Nil {
-				log.Errorf("Token retrieval error: %s", err)
-				return ctx.Status(fiber.StatusInternalServerError).SendString("Error encountered while retrieving identities.")
-			}
-		} else {
+		_, err := s.rdb.Get(tokenCacheKey + identity.Hash()).Result()
+		if err == nil {
 			return nil
 		}
+		if err != redis.Nil {
+			log.Errorf("Token retrieval error: %s", err)
+			return ctx.Status(fiber.StatusInternalServerError).SendString("Error encountered while retrieving identities.")
+		}
 
-		config := identity.getOAuth2Config()
-		urls = append(urls, config.AuthCodeURL(identity.Hash(), oauth2.AccessTypeOffline))
+		url := identity.getOAuth2Config().AuthCodeURL(identity.Hash(), oauth2.AccessTypeOffline)
+		authUrls = append(authUrls, AuthUrl{
+			Url:          url,
+			IdentityHash: identity.Hash(),
+		})
+
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(urls)
+	return ctx.JSON(authUrls)
 }

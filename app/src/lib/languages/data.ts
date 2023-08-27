@@ -6,28 +6,25 @@ export let filteredTargetLanguages: string[] = []
 
 export const setTargetLanguages = (languages: Language[]) => {
     targetLanguages = [...new Set(languages.map(language => language.language.split("-")[0]))]
+    filteredTargetLanguages = targetLanguages.filter((code: string) => code !== sourceLanguageCode)
 }
 
-export let sourceLanguageCode = ""
-export const setSourceLanguageCode = (code: string) => {
-    sourceLanguageCode = code
-}
-
-const savedLanguageKey = "selectedLanguage"
+const savedLanguageStorageKey = "selectedLanguage"
 const getSavedLanguage = (): Language|null => {
     if(typeof window === "undefined") return null
-    const entry = window.localStorage.getItem(savedLanguageKey)
+    const entry = window.localStorage.getItem(savedLanguageStorageKey)
     if(!entry) return null
     return JSON.parse(entry)
 }
 
+export let sourceLanguageCode = ""
 export const selectedLanguage = writable<Language|null>(getSavedLanguage())
 selectedLanguage.subscribe(value => {
     if(!value) return
 
-    filteredTargetLanguages = targetLanguages.filter((code: string) => code !== value.language)
-    setSourceLanguageCode(value.language)
+    sourceLanguageCode = value.language
+    filteredTargetLanguages = targetLanguages.filter((code: string) => code !== sourceLanguageCode)
 
     if(typeof window === "undefined") return
-    window.localStorage.setItem(savedLanguageKey, JSON.stringify(value))
+    window.localStorage.setItem(savedLanguageStorageKey, JSON.stringify(value))
 })
