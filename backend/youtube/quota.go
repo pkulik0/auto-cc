@@ -10,6 +10,7 @@ import (
 const (
 	quotaCacheKey             = "quota_"
 	quotaLimit                = 10000
+	quotaCostVideoInfo        = 1
 	quotaCostVideos           = 100
 	quotaCostListCaptions     = 50
 	quotaCostDownloadCaptions = 200

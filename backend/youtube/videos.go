@@ -61,3 +61,43 @@ func (s *Service) videosHandler(ctx *fiber.Ctx) error {
 		"nextPageToken": res.NextPageToken,
 	})
 }
+
+type VideoMetadata struct {
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	DefaultLanguage string `json:"defaultLanguage"`
+}
+
+func (s *Service) videoMetadataHandler(ctx *fiber.Ctx) error {
+	videoId := ctx.Params("videoId")
+	if videoId == "" {
+		return ctx.Status(fiber.StatusBadRequest).SendString("Missing video id")
+	}
+
+	if err := s.checkQuotaAndRotateIdentity(quotaCostVideoInfo); err != nil {
+		log.Errorf("Quota check failed: %s", err)
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to check quota.")
+	}
+
+	youtubeClient := ctx.Locals("youtubeClient").(*youtube.Service)
+	res, err := youtubeClient.Videos.List([]string{"snippet"}).Id(videoId).Do()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to fetch yt response")
+	}
+
+	_, err = s.addToQuota(quotaCostVideoInfo)
+	if err != nil {
+		log.Errorf("Failed to increment quota: %s", err)
+	}
+
+	if len(res.Items) < 1 {
+		return ctx.Status(fiber.StatusNotFound).SendString("Video not found")
+	}
+	videoSnippet := res.Items[0].Snippet
+
+	return ctx.JSON(VideoMetadata{
+		Title:           videoSnippet.Title,
+		Description:     videoSnippet.Description,
+		DefaultLanguage: videoSnippet.DefaultLanguage,
+	})
+}
