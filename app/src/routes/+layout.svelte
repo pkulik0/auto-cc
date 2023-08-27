@@ -1,24 +1,18 @@
-<script>
-    import LanguageDropdown from "./LanguageDropdown.svelte";
-    import {getVideos, videos} from "$lib/youtube/video";
+<script lang="ts">
+    import "../app.scss"
 
-    const refreshVideos = async () => {
-        if(!confirm("Are you sure?")) return
-        videos.set(await getVideos(true))
-    }
+    import NavBar from "./_nav/NavBar.svelte";
+    import {onMount} from "svelte";
+    import Alert from "./Alert.svelte";
+
+    onMount(() => {
+        import("bootstrap/dist/js/bootstrap.bundle.min.js");
+    });
 </script>
 
-<nav class="navbar navbar-expand-lg bg-primary mb-2">
-    <div class="container-fluid">
-        <div class="navbar-brand">AutoCC</div>
+<NavBar/>
 
-        <div class="navbar-nav">
-            <button class="btn btn-warning m-1" on:click={refreshVideos}>Refresh videos</button>
-            <LanguageDropdown/>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid">
+<div class="container">
+    <Alert/>
     <slot/>
 </div>

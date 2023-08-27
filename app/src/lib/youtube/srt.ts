@@ -1,5 +1,5 @@
-import {sourceLanguageCode, targetLanguages} from "$lib/languages/data";
 import {translateText} from "$lib/languages/api";
+import type {Language} from "$lib/languages/api";
 import _ from "lodash";
 
 interface SrtLine {
@@ -37,10 +37,10 @@ export class Srt {
     }
 }
 
-export const translateSrt = async (srt: Srt) => {
+export const translateSrt = async (srt: Srt, sourceLanguageCode: string, targetLanguagesCodes: string[]) => {
     const srtText = srt.lines.map(line => line.text)
 
-    const promises = targetLanguages.map(targetLanguageCode => {
+    const promises = targetLanguagesCodes.map(targetLanguageCode => {
         return translateText(srtText, sourceLanguageCode, targetLanguageCode)
     })
     const translatedTexts = await Promise.all(promises)

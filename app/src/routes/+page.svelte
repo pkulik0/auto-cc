@@ -1,39 +1,5 @@
 <script lang="ts">
-    import {getVideos, nextPageToken, videos} from "$lib/youtube/video";
-    import type {Video} from "$lib/youtube/video";
-    import VideoRow from "./VideoRow.svelte";
-    import {onMount} from "svelte";
-    import Identities from "./Identities.svelte";
-
-    onMount(async () => {
-        videos.set(await getVideos())
-    })
-
-    const loadMoreVideos = async () => {
-        const moreVideos = await getVideos(true, true)
-        videos.update((v: Video[]) => [...v, ...moreVideos])
-    }
+    import VideosList from "./VideosList.svelte";
 </script>
 
-<Identities/>
-
-<div class="table-responsive mt-4">
-    <table class="table table-striped text-center">
-        <thead class="fs-5">
-        <tr>
-            <th class="w-25">Thumbnail</th>
-            <th class="w-50">Title</th>
-            <th>Date</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-            {#each $videos as video}
-                <VideoRow {video}/>
-            {/each}
-        </tbody>
-    </table>
-    {#if $nextPageToken}
-        <button on:click={loadMoreVideos} class="btn btn-outline-primary w-25 mx-auto d-block mb-4">Load more</button>
-    {/if}
-</div>
+<VideosList/>
