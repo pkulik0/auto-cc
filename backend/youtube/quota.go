@@ -18,7 +18,7 @@ const (
 
 func getQuotaResetTime() time.Time {
 	nowLocal := time.Now()
-	nowPST := nowLocal.In(time.FixedZone("PST", -8*60*60))
+	nowPST := nowLocal.In(time.FixedZone("PST", -9*60*60))
 
 	passedMidnight := time.Date(nowPST.Year(), nowPST.Month(), nowPST.Day(), 0, 0, 0, 0, nowPST.Location())
 	nextMidnight := passedMidnight.AddDate(0, 0, 1)

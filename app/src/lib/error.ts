@@ -5,7 +5,7 @@ export const successOrAlert = async (doWork: Function) => {
         await doWork()
     } catch (e) {
         alertMessage.set(e)
-        setTimeout(async () => {
+        setTimeout( () => {
             let currentMessage = ""
             alertMessage.subscribe(val => currentMessage = val)()
             if(e === currentMessage) alertMessage.set("")
