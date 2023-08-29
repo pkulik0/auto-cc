@@ -1,8 +1,8 @@
 <script lang="ts">
     import {onDestroy, onMount} from "svelte";
-    import {successOrAlert} from "$lib/error";
     import type {IdentityInfo} from "$lib/youtube/identities";
     import {getIdentityInfos} from "$lib/youtube/identities";
+    import {successOrToast} from "$lib/toast";
 
     let identityInfos: IdentityInfo[] = []
     let intervalId: number
@@ -15,7 +15,7 @@
     }
 
     onMount(async () => {
-        await successOrAlert(async () => await loadIdentities())
+        await successOrToast(async () => await loadIdentities())
     })
 
     onDestroy(() => {

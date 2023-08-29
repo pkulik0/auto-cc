@@ -1,6 +1,6 @@
 <script lang="ts">
     import {addIdentity} from "$lib/youtube/identities";
-    import {successOrAlert} from "$lib/error";
+    import {successOrToast} from "$lib/toast";
 
     let clientId = ""
     let clientSecret = ""
@@ -16,7 +16,7 @@
         clientSecretError = !secretTrimmed
         if(clientIdError || clientSecretError) return
 
-        await successOrAlert(async () => await addIdentity(idTrimmed, secretTrimmed))
+        await successOrToast(async () => await addIdentity(idTrimmed, secretTrimmed))
 
         clientId = ""
         clientSecret = ""

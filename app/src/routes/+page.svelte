@@ -3,10 +3,10 @@
     import type {Video} from "$lib/youtube/video";
     import VideoRow from "./_row/VideoRow.svelte";
     import {onMount} from "svelte";
-    import {successOrAlert} from "$lib/error";
+    import {successOrToast} from "$lib/toast";
 
     const loadVideos = async () => {
-        await successOrAlert(async () => videos.set(await getVideos()))
+        await successOrToast(async () => videos.set(await getVideos()))
     }
 
     onMount(async () => {
@@ -26,5 +26,5 @@
 {/each}
 
 {#if $videosNextPageToken}
-    <button on:click={loadMoreVideos} class="btn btn-outline-primary w-25 mx-auto d-block mb-4">Load more</button>
+    <button on:click={loadMoreVideos} class="btn btn-outline-primary w-75 mx-auto d-block mb-4">Load more</button>
 {/if}

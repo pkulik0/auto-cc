@@ -1,12 +1,13 @@
 <script lang="ts">
     import type {VideoMetadata} from "$lib/youtube/metadata";
     import {insertVideoMetadata, metadataSeparator, translateMetadata} from "$lib/youtube/metadata";
-    import {successOrAlert} from "$lib/error";
     import {onMount} from "svelte";
     import {fade} from "svelte/transition"
+    import {sendToast, successOrToast} from "$lib/toast";
 
     export let videoId: string
     export let metadata: VideoMetadata
+    export let hideEditor: () => void
 
     let title = ""
     let description = ""
@@ -26,9 +27,12 @@
             "language": metadata.language
         }
 
-        await successOrAlert(async () => {
+        await successOrToast(async () => {
             const translatedMetadataArray = await translateMetadata(editedMetadata)
             await insertVideoMetadata(videoId, translatedMetadataArray)
+
+            await sendToast("Success", "The metadata has been updated.")
+            hideEditor()
         })
     }
 
@@ -66,12 +70,12 @@
     </div>
     <div class="col-md-4 col-12 mt-2 mt-mb-0 order-md-1 order-0">
         <h5>Example</h5>
-        <code>Separators{metadataSeparator} can be used to split{metadataSeparator} the text during translation</code>
+        <code>Separators{metadataSeparator} can be used to split{metadataSeparator} text for translation</code>
 
         <h5 class="mt-3">Resulting translation input</h5>
         <p>1.<code class="ms-2">Separators</code></p>
         <p>2.<code class="ms-2"> can be used to split</code></p>
-        <p>3.<code class="ms-2"> the text during translation</code></p>
+        <p>3.<code class="ms-2"> text for translation</code></p>
     </div>
 </div>
 

@@ -4,11 +4,16 @@
     import type {Language} from "$lib/languages/api";
     import {selectedLanguage} from "$lib/languages/data";
     import {setTargetLanguages} from "$lib/languages/data";
+    import {successOrToast} from "$lib/toast";
 
-    onMount(async () => {
+    const initLanguages = async () => {
         const response = await getLanguages()
         sourceLanguages = response.source
         setTargetLanguages(response.target)
+    }
+
+    onMount(async () => {
+        await successOrToast(async () => await initLanguages())
     })
 
     const saveLanguage = (language: Language) => {

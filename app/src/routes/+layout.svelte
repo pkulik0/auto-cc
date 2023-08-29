@@ -3,16 +3,16 @@
 
     import NavBar from "./_nav/NavBar.svelte";
     import {onMount} from "svelte";
-    import Alert from "./Alert.svelte";
+    import ToastContainer from "./ToastContainer.svelte";
 
     onMount(() => {
         import("bootstrap/dist/js/bootstrap.bundle.min.js");
     });
 </script>
 
+<ToastContainer/>
 <NavBar/>
 
 <div class="container">
-    <Alert/>
     <slot/>
 </div>

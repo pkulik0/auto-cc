@@ -1,11 +1,11 @@
 <script lang="ts">
     import type {Video} from "$lib/youtube/video";
-    import {filteredTargetLanguages, selectedLanguage, targetLanguages} from "$lib/languages/data";
+    import {filteredTargetLanguages, selectedLanguage} from "$lib/languages/data";
     import {translateVideoCC} from "$lib/youtube/cc";
-    import {successOrAlert} from "$lib/error";
     import MetadataEditor from "./MetadataEditor.svelte";
     import type {VideoMetadata} from "$lib/youtube/metadata";
     import {getMetadata} from "$lib/youtube/metadata";
+    import {sendToast, successOrToast} from "$lib/toast";
 
     export let video: Video
     let videoTime = new Date(video.publishedAt).toLocaleString()
@@ -21,11 +21,14 @@
             return
         }
 
-        await successOrAlert(async () => await translateVideoCC(video, $selectedLanguage!.language, filteredTargetLanguages))
+        await successOrToast(async () => {
+            await translateVideoCC(video, $selectedLanguage!.language, filteredTargetLanguages)
+            await sendToast("Success", "The closed captions have been uploaded to YouTube.")
+        })
     }
 
     const toggleMetadataEditor = async () => {
-        await successOrAlert(async () => {
+        await successOrToast(async () => {
             metadata = await getMetadata(video.id)
             if(!metadata.language) throw new Error("Unknown default language. Set in on YouTube first.")
 
@@ -45,5 +48,7 @@
 </div>
 
 {#if showMetadataEditor}
-    <MetadataEditor videoId={video.id} {metadata} />
+    <MetadataEditor videoId={video.id} {metadata} hideEditor={() => showMetadataEditor = false}/>
 {/if}
+
+<hr class="hr" />
