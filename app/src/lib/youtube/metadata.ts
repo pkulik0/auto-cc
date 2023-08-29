@@ -1,5 +1,4 @@
-import {PUBLIC_YOUTUBE_URL} from "$env/static/public";
-import type {Video} from "$lib/youtube/video";
+import {PUBLIC_API_URL} from "$env/static/public";
 import {translateText} from "$lib/languages/api";
 import {targetLanguages} from "$lib/languages/data";
 
@@ -12,7 +11,7 @@ export interface VideoMetadata {
 export const metadataSeparator = ";"
 
 export const getMetadata = async (videoId: string): Promise<VideoMetadata> => {
-    const response = await fetch(PUBLIC_YOUTUBE_URL+`/videos/${videoId}`)
+    const response = await fetch(PUBLIC_API_URL+`/youtube/videos/${videoId}`)
     if(!response.ok) throw new Error(`Failed to fetch metadata for ${videoId}`)
     return response.json()
 }
@@ -41,7 +40,7 @@ export const translateMetadata = async (metadata: VideoMetadata): Promise<VideoM
 }
 
 export const insertVideoMetadata = async (videoId: string, metadataArray: VideoMetadata[]) => {
-    const response = await fetch(PUBLIC_YOUTUBE_URL+`/videos/${videoId}`, {
+    const response = await fetch(PUBLIC_API_URL+`/youtube/videos/${videoId}`, {
         method: "POST",
         body: JSON.stringify(metadataArray),
         headers: {

@@ -1,4 +1,4 @@
-import {alertMessage} from "$lib/stores";
+import {alertMessage} from "$lib/alert";
 
 export const successOrAlert = async (doWork: Function) => {
     try {

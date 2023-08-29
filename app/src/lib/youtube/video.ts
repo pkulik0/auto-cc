@@ -1,4 +1,4 @@
-import {PUBLIC_YOUTUBE_URL} from "$env/static/public";
+import {PUBLIC_API_URL} from "$env/static/public";
 import {writable} from "svelte/store";
 
 export interface Video {
@@ -15,13 +15,14 @@ interface VideosResponse {
 }
 
 export const videos = writable<Video[]>([])
-export const nextPageToken = writable<string>("")
+export const videosNextPageToken = writable<string>("")
+
 
 export const getVideos = async (fresh = false, next = false): Promise<Video[]> => {
-    let url = PUBLIC_YOUTUBE_URL+"/videos"
+    let url = PUBLIC_API_URL+"/youtube/videos"
 
     let token = ""
-    nextPageToken.subscribe(s => token = s)()
+    videosNextPageToken.subscribe(s => token = s)()
     if(next && token) url += "?token=" + token
 
     const response = await fetch(url, {
@@ -32,7 +33,7 @@ export const getVideos = async (fresh = false, next = false): Promise<Video[]> =
     }
 
     const videosResponse: VideosResponse = await response.json()
-    nextPageToken.set(videosResponse.nextPageToken)
+    videosNextPageToken.set(videosResponse.nextPageToken)
 
     return videosResponse.videos.filter(v => !v.description.includes("#short"))
 }

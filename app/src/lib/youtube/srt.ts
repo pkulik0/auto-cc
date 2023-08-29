@@ -1,5 +1,4 @@
 import {translateText} from "$lib/languages/api";
-import type {Language} from "$lib/languages/api";
 import _ from "lodash";
 
 interface SrtLine {

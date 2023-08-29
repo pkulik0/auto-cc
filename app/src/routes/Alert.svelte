@@ -1,6 +1,6 @@
 <script lang="ts">
     import {fade} from "svelte/transition"
-    import {alertMessage} from "$lib/stores";
+    import {alertMessage} from "$lib/alert";
 </script>
 
 {#if $alertMessage}

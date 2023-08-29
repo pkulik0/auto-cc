@@ -1,4 +1,4 @@
-package main
+package utility
 
 import (
 	"crypto/sha256"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func hashFromStrings(data []string) string {
+func HashFromStrings(data []string) string {
 	joined := strings.Join(data, "")
 	hash := sha256.Sum256([]byte(joined))
 	return hex.EncodeToString(hash[:])

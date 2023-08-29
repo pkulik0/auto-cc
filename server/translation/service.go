@@ -1,11 +1,12 @@
-package main
+package translation
 
 import (
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/pkulik0/autocc/translation/deepl"
+	"github.com/pkulik0/autocc/server/translation/deepl"
+	"github.com/pkulik0/autocc/server/utility"
 	"time"
 )
 
@@ -14,16 +15,17 @@ type Service struct {
 	rdb         *redis.Client
 }
 
-func newService(deeplClient *deepl.DeepL, rdb *redis.Client) *Service {
+func NewTranslationService(deeplClient *deepl.DeepL, rdb *redis.Client) *Service {
 	return &Service{
 		deeplClient: deeplClient,
 		rdb:         rdb,
 	}
 }
 
-func (s *Service) registerEndpoint(app *fiber.App) {
-	app.Get("/languages", s.languagesHandler)
-	app.Post("/translate", s.translateHandler)
+func (s *Service) RegisterEndpoints(app *fiber.App) {
+	group := app.Group("/translation")
+	group.Get("/languages", s.languagesHandler)
+	group.Post("/translate", s.translateHandler)
 }
 
 func (s *Service) languagesHandler(ctx *fiber.Ctx) error {
@@ -63,7 +65,7 @@ func (s *Service) translateHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Invalid request data.")
 	}
 
-	cacheKey := fmt.Sprintf("translation_%s_%s_%s", requestData.SourceLanguageCode, requestData.TargetLanguageCode, hashFromStrings(requestData.Text))
+	cacheKey := fmt.Sprintf("translation_%s_%s_%s", requestData.SourceLanguageCode, requestData.TargetLanguageCode, utility.HashFromStrings(requestData.Text))
 	cachedTranslation, err := s.rdb.LRange(cacheKey, 0, -1).Result()
 	if err != nil {
 		log.Errorf("Failed to get %s from db: %s", cacheKey, err)

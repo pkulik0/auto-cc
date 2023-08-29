@@ -1,4 +1,4 @@
-package main
+package youtube
 
 import (
 	"crypto/sha256"
@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/pkulik0/autocc/server/utility"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
@@ -18,6 +19,7 @@ const identitiesKey = "identities"
 type Identity struct {
 	ClientId     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
+	RedirectUri  string `json:"-"`
 }
 
 func (i *Identity) Hash() string {
@@ -26,7 +28,7 @@ func (i *Identity) Hash() string {
 }
 
 func (i *Identity) getOAuth2Config() *oauth2.Config {
-	redirectUri := getEnv("GOOGLE_REDIRECT_URI")
+	redirectUri := utility.GetReqEnv("GOOGLE_REDIRECT_URI")
 
 	return &oauth2.Config{
 		ClientID:     i.ClientId,
