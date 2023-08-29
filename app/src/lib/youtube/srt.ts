@@ -37,7 +37,7 @@ export class Srt {
     }
 }
 
-export const translateSrt = async (srt: Srt, sourceLanguageCode: string, targetLanguagesCodes: string[]) => {
+export const translateSrt = async (srt: Srt, sourceLanguageCode: string, targetLanguagesCodes: string[]): Promise<Srt[]> => {
     const srtText = srt.lines.map(line => line.text)
 
     const promises = targetLanguagesCodes.map(targetLanguageCode => {

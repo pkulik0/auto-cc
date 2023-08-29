@@ -19,7 +19,7 @@ func (s *Service) ccListHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Missing video id.")
 	}
 
-	if err := s.checkQuotaAndRotateIdentity(quotaCostListCaptions); err != nil {
+	if err := s.checkQuotaAndRotateIdentity(ctx, quotaCostListCaptions); err != nil {
 		log.Errorf("Quota check failed: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to check quota.")
 	}
@@ -54,7 +54,7 @@ func (s *Service) ccDownloadHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Missing ccId.")
 	}
 
-	if err := s.checkQuotaAndRotateIdentity(quotaCostInsertCaptions); err != nil {
+	if err := s.checkQuotaAndRotateIdentity(ctx, quotaCostInsertCaptions); err != nil {
 		log.Errorf("Quota check failed: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to check quota.")
 	}
@@ -88,7 +88,7 @@ func (s *Service) ccUpload(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("Missing language parameter")
 	}
 
-	if err := s.checkQuotaAndRotateIdentity(quotaCostInsertCaptions); err != nil {
+	if err := s.checkQuotaAndRotateIdentity(ctx, quotaCostInsertCaptions); err != nil {
 		log.Errorf("Quota check failed: %s", err)
 		return ctx.Status(fiber.StatusInternalServerError).SendString("Failed to check quota.")
 	}

@@ -45,8 +45,12 @@ func (s *Service) registerEndpoints(app *fiber.App) {
 	}))
 
 	app.Get("/videos", s.videosHandler)
+
 	app.Get("/videos/:videoId", s.videoMetadataHandler)
+	app.Post("/videos/:videoId", s.videoUpdateMetadataHandler)
+
 	app.Get("/videos/:videoId/cc", s.ccListHandler)
 	app.Post("/videos/:videoId/cc", s.ccUpload)
+
 	app.Get("/cc/:ccId", s.ccDownloadHandler)
 }

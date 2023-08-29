@@ -6,7 +6,7 @@ interface Identity {
     isSelected: boolean
 }
 
-interface AuthInfo {
+interface AuthUrl {
     identityHash: string
     url: string
 }
@@ -20,23 +20,22 @@ export interface IdentityInfo {
 
 export const getIdentityInfos = async () => {
     const identities = await getIdentities()
-    const authInfos = await getAuthInfo()
+    const authUrls = await getAuthUrls()
 
     const identityInfos: IdentityInfo[] = identities.map(identity => {
-        const matchingInfo = authInfos.find(info => info.identityHash == identity.identityHash)
+        const matchingAuthUrl = authUrls.find(info => info.identityHash == identity.identityHash)
         return {
             "hash": identity.identityHash,
             "usedQuota": identity.usedQuota,
             "isSelected": identity.isSelected,
-            "authUrl": matchingInfo?.url
+            "authUrl": matchingAuthUrl?.url
         }
     })
 
-    console.log(identityInfos)
     return identityInfos
 }
 
-const getAuthInfo = async (): Promise<AuthInfo[]> => {
+const getAuthUrls = async (): Promise<AuthUrl[]> => {
     const response = await fetch(PUBLIC_YOUTUBE_URL+"/auth")
     if(!response.ok) throw new Error("Failed to get auth info")
     return response.json()

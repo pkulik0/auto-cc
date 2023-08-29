@@ -14,6 +14,7 @@ interface VideosResponse {
     nextPageToken: string
 }
 
+export const videos = writable<Video[]>([])
 export const nextPageToken = writable<string>("")
 
 export const getVideos = async (fresh = false, next = false): Promise<Video[]> => {
@@ -35,5 +36,3 @@ export const getVideos = async (fresh = false, next = false): Promise<Video[]> =
 
     return videosResponse.videos.filter(v => !v.description.includes("#short"))
 }
-
-export const videos = writable<Video[]>([])

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-redis/redis"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ const (
 	quotaCacheKey             = "quota_"
 	quotaLimit                = 10000
 	quotaCostVideoInfo        = 1
+	quotaCostUpdateVideo      = 50
 	quotaCostVideos           = 100
 	quotaCostListCaptions     = 50
 	quotaCostDownloadCaptions = 200
@@ -63,7 +65,7 @@ func (s *Service) getQuota(identityHash string) (uint64, error) {
 	return parsedValue, nil
 }
 
-func (s *Service) checkQuotaAndRotateIdentity(neededPoints uint64) error {
+func (s *Service) checkQuotaAndRotateIdentity(ctx *fiber.Ctx, neededPoints uint64) error {
 	identity, err := s.Identity()
 	if err != nil {
 		return err
@@ -86,7 +88,7 @@ func (s *Service) checkQuotaAndRotateIdentity(neededPoints uint64) error {
 			return err
 		}
 		if quotaUsage+neededPoints <= quotaLimit {
-			return nil
+			return s.generateClientFromCurrentIdentity(ctx)
 		}
 
 		identity, err = s.nextIdentity()
