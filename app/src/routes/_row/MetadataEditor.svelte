@@ -46,7 +46,7 @@
 </script>
 
 <div transition:fade class="row w-75 mx-auto my-2">
-    <div class="col-8">
+    <div class="col-md-8 col-12 order-md-0 order-1">
         <form on:submit|preventDefault={submitForm}>
             <div class="form-floating mb-3">
                 <input on:input={() => titleError = false} bind:value={title} type="text" class="form-control {titleError ? 'is-invalid' : ''}" id="titleInput" placeholder="Title">
@@ -64,7 +64,7 @@
             <button type="button" on:click={reset} class="btn btn-outline-secondary w-100 m-1">Revert changes</button>
         </form>
     </div>
-    <div class="col-4">
+    <div class="col-md-4 col-12 mt-2 mt-mb-0 order-md-1 order-0">
         <h5>Example</h5>
         <code>Separators{metadataSeparator} can be used to split{metadataSeparator} the text during translation</code>
 
@@ -77,6 +77,6 @@
 
 <style>
     #descriptionInput {
-        height: 10em;
+        height: 15em;
     }
 </style>

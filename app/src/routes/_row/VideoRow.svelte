@@ -35,10 +35,10 @@
 </script>
 
 <div class="row align-items-center text-center justify-content-center">
-    <div class="col-3"><img alt="" class="w-75 p-3" src={video.thumbnailUrl}></div>
-    <div class="col-4 lead">{video.title}</div>
-    <div class="col-2">{videoTime}</div>
-    <div class="col-3">
+    <div class="col-md-3 col-12"><img alt="" class="w-75 p-3" src={video.thumbnailUrl}></div>
+    <div class="col-md-4 mb-md-0 col-12 mb-2 lead">{video.title}</div>
+    <div class="col-md-2 mb-md-0 col-12 mb-2">{videoTime}</div>
+    <div class="col-md-3 mb-md-0 col-12 mb-2">
         <button on:click={runCaptionsTranslation} class="btn btn-primary w-100 m-1">Translate captions</button>
         <button on:click={toggleMetadataEditor} class="btn btn-outline-primary w-100 m-1">{metadataButtonLabel}</button>
     </div>
