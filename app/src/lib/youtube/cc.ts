@@ -13,7 +13,7 @@ export const translateVideoCC = async (video: Video, sourceLanguageCode: string,
     const translatedSrts = await translateSrt(srt, sourceLanguageCode, targetLanguagesCodes)
 
     for(const [index, translatedSrt] of translatedSrts.entries()) {
-        await insertCC(srt, targetLanguagesCodes[index], video.id)
+        await insertCC(translatedSrt, targetLanguagesCodes[index], video.id)
     }
 }
 
