@@ -13,5 +13,8 @@ FROM alpine:latest AS server
 WORKDIR /app
 COPY --from=build /app/server .
 
+RUN adduser -D appuser && chown -R appuser /app
+USER appuser
+
 EXPOSE 3000
 CMD ["./server"]
