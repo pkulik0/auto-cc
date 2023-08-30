@@ -31,7 +31,7 @@
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         {#each sourceLanguages as language}
-            <li><a class="dropdown-item" on:click={() => saveLanguage(language)} href="/app/static">{language.name}</a></li>
+            <li><button class="dropdown-item" on:click={() => saveLanguage(language)}>{language.name}</button></li>
         {/each}
     </ul>
 </div>

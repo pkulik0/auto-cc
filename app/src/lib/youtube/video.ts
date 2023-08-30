@@ -1,5 +1,5 @@
-import {PUBLIC_API_URL} from "$env/static/public";
 import {writable} from "svelte/store";
+import {env} from "$env/dynamic/public";
 
 export interface Video {
     id: string,
@@ -19,7 +19,7 @@ export const videosNextPageToken = writable<string>("")
 
 
 export const getVideos = async (fresh = false, next = false): Promise<Video[]> => {
-    let url = PUBLIC_API_URL+"/youtube/videos"
+    let url = env.PUBLIC_API_URL+"/youtube/videos"
 
     let token = ""
     videosNextPageToken.subscribe(s => token = s)()

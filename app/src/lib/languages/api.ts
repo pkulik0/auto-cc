@@ -1,4 +1,4 @@
-import {PUBLIC_API_URL} from "$env/static/public";
+import {env} from "$env/dynamic/public";
 
 export interface Language {
     name: string
@@ -11,7 +11,7 @@ interface LanguagesResponse {
 }
 
 export const getLanguages = async (): Promise<LanguagesResponse> => {
-    const response = await fetch(PUBLIC_API_URL+"/translation/languages")
+    const response = await fetch(env.PUBLIC_API_URL+"/translation/languages")
     if(!response.ok) {
         throw new Error("Failed to fetch available languages.")
     }
@@ -19,7 +19,7 @@ export const getLanguages = async (): Promise<LanguagesResponse> => {
 }
 
 export const translateText = async (text: string[], sourceLanguageCode: string, targetLanguageCode: string): Promise<string[]> => {
-    const response = await fetch(PUBLIC_API_URL+"/translation/translate", {
+    const response = await fetch(env.PUBLIC_API_URL+"/translation/translate", {
         method: "POST",
         headers: {
             'Content-Type': 'application/json'

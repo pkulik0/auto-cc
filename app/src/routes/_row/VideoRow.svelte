@@ -12,8 +12,9 @@
 
     let showMetadataEditor = false
     let metadata: VideoMetadata
-
     $: metadataButtonLabel = (showMetadataEditor ? "Hide" : "Show") + " metadata translation"
+
+    let isRunningTranslation = false
 
     const runCaptionsTranslation = async () => {
         if(!$selectedLanguage) {
@@ -21,10 +22,12 @@
             return
         }
 
+        isRunningTranslation = true
         await successOrToast(async () => {
             await translateVideoCC(video, $selectedLanguage!.language, filteredTargetLanguages)
             await sendToast("Success", "The closed captions have been uploaded to YouTube.")
         })
+        isRunningTranslation = false
     }
 
     const toggleMetadataEditor = async () => {
@@ -42,7 +45,13 @@
     <div class="col-md-4 mb-md-0 col-12 mb-2 lead">{video.title}</div>
     <div class="col-md-2 mb-md-0 col-12 mb-2">{videoTime}</div>
     <div class="col-md-3 mb-md-0 col-12 mb-2">
-        <button on:click={runCaptionsTranslation} class="btn btn-primary w-100 m-1">Translate captions</button>
+        <button on:click={runCaptionsTranslation} class="btn btn-primary w-100 m-1">
+            {#if isRunningTranslation}
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {:else}
+                Translate captions
+            {/if}
+        </button>
         <button on:click={toggleMetadataEditor} class="btn btn-outline-primary w-100 m-1">{metadataButtonLabel}</button>
     </div>
 </div>

@@ -1,6 +1,6 @@
 import type {Video} from "$lib/youtube/video";
 import {Srt, translateSrt} from "$lib/youtube/srt";
-import {PUBLIC_API_URL} from "$env/static/public";
+import {env} from "$env/dynamic/public";
 
 export const translateVideoCC = async (video: Video, sourceLanguageCode: string, targetLanguagesCodes: string[]) => {
     const ccList: CCEntry[] = await getCCList(video.id)
@@ -12,8 +12,9 @@ export const translateVideoCC = async (video: Video, sourceLanguageCode: string,
     const srt = new Srt(await downloadCC(ccEntry.id))
     const translatedSrts = await translateSrt(srt, sourceLanguageCode, targetLanguagesCodes)
 
-    const insertPromises = translatedSrts.map((srt, index) => insertCC(srt, targetLanguagesCodes[index], video.id))
-    await Promise.all(insertPromises)
+    for(const [index, translatedSrt] of translatedSrts.entries()) {
+        await insertCC(srt, targetLanguagesCodes[index], video.id)
+    }
 }
 
 interface CCEntry {
@@ -22,19 +23,19 @@ interface CCEntry {
 }
 
 const getCCList = async (videoId: string): Promise<CCEntry[]> => {
-    const response = await fetch(PUBLIC_API_URL+`/youtube/videos/${videoId}/cc`)
+    const response = await fetch(env.PUBLIC_API_URL+`/youtube/videos/${videoId}/cc`)
     if(!response.ok) throw new Error(`Failed to fetch CCs of ${videoId}`)
     return response.json()
 }
 
 const downloadCC = async (ccId: string): Promise<string> => {
-    const response = await fetch(PUBLIC_API_URL+`/youtube/cc/${ccId}`)
+    const response = await fetch(env.PUBLIC_API_URL+`/youtube/cc/${ccId}`)
     if(!response.ok) throw new Error(`Failed to download CC with id ${ccId}`)
     return (await response.text()).trimEnd()
 }
 
 const insertCC = async (srt: Srt, languageCode: string, videoId: string): Promise<void> => {
-    const response = await fetch(PUBLIC_API_URL+`/youtube/videos/${videoId}/cc?language=${languageCode}`, {
+    const response = await fetch(env.PUBLIC_API_URL+`/youtube/videos/${videoId}/cc?language=${languageCode}`, {
         method: "POST",
         body: srt.toString(),
     })

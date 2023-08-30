@@ -4,6 +4,7 @@
     import VideoRow from "./_row/VideoRow.svelte";
     import {onMount} from "svelte";
     import {successOrToast} from "$lib/toast";
+    import {fly} from "svelte/transition";
 
     const loadVideos = async () => {
         await successOrToast(async () => videos.set(await getVideos()))
@@ -20,7 +21,7 @@
 </script>
 
 {#each $videos as video}
-    <div class="mb-3">
+    <div transition:fly={{duration: 500, y: 100}} class="mb-3">
         <VideoRow {video}/>
     </div>
 {/each}

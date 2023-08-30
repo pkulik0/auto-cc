@@ -6,6 +6,29 @@ services:
     volumes:
       - redis-data:/data
 
+  app:
+    build:
+      context: app
+      dockerfile: ../node.Dockerfile
+    ports:
+      - 3000:3000
+    depends_on: [server]
+    environment:
+      - PUBLIC_API_URL=${API_URL}
+
+  server:
+    build:
+      context: server
+      dockerfile: ../go.Dockerfile
+    ports:
+      - 3001:3000
+    depends_on: [redis]
+    environment:
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - DEEPL_API_KEY=${DEEPL_API_KEY}
+      - REDIS_URL=${REDIS_URL}
+      - PORT=${PORT}
+
 volumes:
   redis-data:
     driver: local
