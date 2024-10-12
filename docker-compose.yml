@@ -1,0 +1,35 @@
+services:
+  api:
+    build: api
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  app:
+    build: app
+    ports:
+      - "8000:80"
+    depends_on:
+      - api
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    ports:
+      - "8081:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USER: "admin"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "admin"
+      KC_BOOTSTRAP_REALM: "autocc"
+    command: start-dev
