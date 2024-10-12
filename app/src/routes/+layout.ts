@@ -1,10 +1,11 @@
-export const prerender = true
+export const prerender = true;
+export const ssr = false;
 
-import { register, init, getLocaleFromNavigator } from 'svelte-i18n';
+import { addMessages, init, getLocaleFromNavigator } from 'svelte-i18n';
+import en from '$lib/locales/en.json';
 
-register('en', () => import('$lib/locales/en.json'));
-
+addMessages('en', en);
 init({
 	fallbackLocale: 'en',
-	initialLocale: getLocaleFromNavigator(),
-})
+	initialLocale: getLocaleFromNavigator()
+});
