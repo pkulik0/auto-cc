@@ -1,6 +1,6 @@
 import { PUBLIC_KEYCLOAK_CLIENT_ID, PUBLIC_KEYCLOAK_URL } from "$env/static/public";
 import { UserManager, Log, User, WebStorageStateStore } from "oidc-client-ts";
-import { readable } from "svelte/store";
+import { writable } from "svelte/store";
 
 const baseUrl = window.location.origin;
 export const userManager = new UserManager({
@@ -17,11 +17,14 @@ export const userManager = new UserManager({
 Log.setLogger(console);
 Log.setLevel(Log.DEBUG);
 
-export const userStore = readable<User | null>(null, set => {
+export const userStore = writable<User | null>(null, set => {
     userManager.getUser().then(user => {
         set(user);
-    }).catch(e => {
-        console.error(e);
+    });
+    userManager.events.addUserLoaded(user => {
+        set(user);
+    });
+    userManager.events.addUserUnloaded(() => {
         set(null);
     });
 })
