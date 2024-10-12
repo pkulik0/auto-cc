@@ -1,5 +1,16 @@
 <script>
+	import { onMount } from "svelte";
 	import CredentialsTable from "./CredentialsTable.svelte";
+	import { getCredentials } from "$lib/api";
+
+    onMount(async () => {
+        try {
+            await getCredentials();
+            console.log("Credentials fetched");
+        } catch (error) {
+            console.error(error);
+        }
+    })
 
 </script>
 

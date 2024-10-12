@@ -1,5 +1,8 @@
 package service
 
+// Service is an interface for the service layer.
+//
+//go:generate mockgen -destination=../mock/service.go -package=mock . Service
 type Service interface {
 }
 
