@@ -1,0 +1,12 @@
+{
+    "app": {
+        "name": "AutoCC"
+    },
+    "nav": {
+        "home": "Home",
+        "credentials": "Credentials",
+        "settings": "Settings",
+        "sign_in": "Sign In",
+        "sign_out": "Sign Out"
+    }
+}
