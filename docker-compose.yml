@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      redis:
+      postgres:
         condition: service_healthy
 
   app:
@@ -14,12 +14,16 @@ services:
     depends_on:
       - api
   
-  redis:
-    image: redis:alpine
+  postgres:
+    image: postgres:alpine
     ports:
-      - "6379:6379"
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "autocc"
+      POSTGRES_USER: "autocc"
+      POSTGRES_PASSWORD: "autocc"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U autocc"]
       interval: 10s
       timeout: 10s
       retries: 5

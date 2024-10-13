@@ -1,0 +1,14 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/pkulik0/autocc/api
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: api/internal
+    opt: paths=source_relative
+  - remote: buf.build/community/stephenh-ts-proto
+    out: app/src/lib
+inputs:
+  - directory: .

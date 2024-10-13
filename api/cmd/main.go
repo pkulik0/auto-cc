@@ -11,6 +11,7 @@ import (
 	"github.com/pkulik0/autocc/api/internal/auth"
 	"github.com/pkulik0/autocc/api/internal/server"
 	"github.com/pkulik0/autocc/api/internal/service"
+	"github.com/pkulik0/autocc/api/internal/store"
 	"github.com/pkulik0/autocc/api/internal/version"
 )
 
@@ -34,7 +35,12 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to parse config")
 	}
 
-	service := service.New()
+	store, err := store.New(c.PostgresHost, c.PostgresPort, c.PostgresUser, c.PostgresPass, c.PostgresDB)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create store")
+	}
+	service := service.New(store)
+
 	auth, err := auth.New(context.Background(), c.KeycloakURL, c.KeycloakRealm, c.KeycloakClientId, c.KeycloakClientSecret)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create auth")

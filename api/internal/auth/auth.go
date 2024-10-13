@@ -91,10 +91,13 @@ type keycloakAuth struct {
 // New creates a new instance of keycloak auth.
 func New(ctx context.Context, url, realm, clientID, clientSecret string) (*keycloakAuth, error) {
 	client := gocloak.NewClient(url)
+
 	token, err := newToken(client, realm, clientID, clientSecret)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Info().Str("realm", realm).Msg("created keycloak auth")
 	return &keycloakAuth{
 		client: client,
 		token:  token,
@@ -102,17 +105,17 @@ func New(ctx context.Context, url, realm, clientID, clientSecret string) (*keycl
 	}, nil
 }
 
-var (
-	userIdContextKey struct{} = struct{}{}
-	userSuperuserKey struct{} = struct{}{}
+type (
+	userIdContextKey struct{}
+	userSuperuserKey struct{}
 )
 
 func UserFromContext(ctx context.Context) (userId string, isSuperuser bool, ok bool) {
-	userId, ok = ctx.Value(userIdContextKey).(string)
+	userId, ok = ctx.Value(userIdContextKey{}).(string)
 	if !ok {
 		return "", false, false
 	}
-	isSuperuser, ok = ctx.Value(userSuperuserKey).(bool)
+	isSuperuser, ok = ctx.Value(userSuperuserKey{}).(bool)
 	if !ok {
 		return "", false, false
 	}
@@ -120,8 +123,8 @@ func UserFromContext(ctx context.Context) (userId string, isSuperuser bool, ok b
 }
 
 func contextWithUser(ctx context.Context, userId string, isSuperuser bool) context.Context {
-	ctx = context.WithValue(ctx, userIdContextKey, userId)
-	ctx = context.WithValue(ctx, userSuperuserKey, isSuperuser)
+	ctx = context.WithValue(ctx, userIdContextKey{}, userId)
+	ctx = context.WithValue(ctx, userSuperuserKey{}, isSuperuser)
 	return ctx
 }
 
@@ -153,14 +156,14 @@ func (a *keycloakAuth) AuthMiddleware(next http.Handler) http.Handler {
 		userId, err := claims.GetSubject()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get subject")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
 		groups, err := a.client.GetUserGroups(r.Context(), a.token.AccessToken(), a.realm, userId, gocloak.GetGroupsParams{})
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get user groups")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 

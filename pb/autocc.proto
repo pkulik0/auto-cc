@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package pb;
+
+message AddCredentialsGoogleRequest {
+    string client_id = 1;
+    string client_secret = 2;
+}
+
+message CredentialsGoogle {
+    uint64 id = 1;
+    string client_id = 2;
+    string client_secret = 3;
+    uint64 usage = 4;
+}
+
+message AddCredentialsGoogleResponse {
+    CredentialsGoogle credentials = 1;
+}
+
+message AddCredentialsDeepLRequest {
+    string key = 1;
+}
+
+message CredentialsDeepL {
+    uint64 id = 1;
+    string key = 2;
+    uint64 usage = 3;
+}
+
+message AddCredentialsDeepLResponse {
+    CredentialsDeepL credentials = 1;
+}
+
+message GetCredentialsResponse {
+    repeated CredentialsGoogle google = 1;
+    repeated CredentialsDeepL deepl = 2;
+}

@@ -1,12 +1,22 @@
 {
-    "app": {
-        "name": "AutoCC"
-    },
-    "nav": {
-        "videos": "Videos",
-        "credentials": "Credentials",
-        "settings": "Settings",
-        "sign_in": "Sign In",
-        "sign_out": "Sign Out"
-    }
+	"app": {
+		"name": "AutoCC"
+	},
+	"nav": {
+		"videos": "Videos",
+		"credentials": "Credentials",
+		"settings": "Settings",
+		"sign_in": "Sign In",
+		"sign_out": "Sign Out"
+	},
+	"credentials": {
+		"add": "Add",
+		"actions": "Actions",
+		"usage": "Usage",
+		"api_key": "API Key",
+		"client_id": "Client ID",
+		"client_secret": "Client Secret",
+		"no_credentials": "No credentials found",
+		"service": "Service"
+	}
 }
