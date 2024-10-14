@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/server"
 	"github.com/pkulik0/autocc/api/internal/service"
 	"github.com/pkulik0/autocc/api/internal/store"
@@ -33,7 +34,8 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create store")
 	}
-	service := service.New(store, c.GoogleCallbackURL)
+	oauth := oauth.New(c.GoogleCallbackURL)
+	service := service.New(store, oauth)
 
 	auth, err := auth.New(context.Background(), c.KeycloakURL, c.KeycloakRealm, c.KeycloakClientId, c.KeycloakClientSecret)
 	if err != nil {

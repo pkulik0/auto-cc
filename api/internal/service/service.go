@@ -5,14 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/youtube/v3"
 
 	"github.com/pkulik0/autocc/api/internal/model"
+	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
@@ -46,16 +44,16 @@ type Service interface {
 var _ Service = &service{}
 
 type service struct {
-	store             store.Store
-	googleCallbackURL string
+	store store.Store
+	oauth oauth.OAuth2
 }
 
 // New creates a new service.
-func New(s store.Store, googleCallbackURL string) *service {
+func New(s store.Store, o oauth.OAuth2) *service {
 	log.Info().Msg("created service")
 	return &service{
-		store:             s,
-		googleCallbackURL: googleCallbackURL,
+		store: s,
+		oauth: o,
 	}
 }
 
@@ -110,17 +108,6 @@ func generateState() (string, error) {
 	return hex.EncodeToString(randomBytes), nil
 }
 
-func (s *service) getGoogleOauthConfig(clientID, clientSecret string) (*oauth2.Config, string) {
-	scopes := []string{youtube.YoutubeForceSslScope}
-	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Endpoint:     google.Endpoint,
-		Scopes:       scopes,
-		RedirectURL:  s.googleCallbackURL,
-	}, strings.Join(scopes, ";")
-}
-
 func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID string) (string, error) {
 	if userID == "" {
 		return "", ErrInvalidInput
@@ -130,7 +117,7 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 	if err != nil {
 		return "", err
 	}
-	oauthConfig, scopes := s.getGoogleOauthConfig(credentials.ClientID, credentials.ClientSecret)
+	oauthClient, scopes := s.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
 
 	state, err := generateState()
 	if err != nil {
@@ -141,7 +128,7 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 		return "", err
 	}
 
-	return oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
+	return oauthClient.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
 }
 
 func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) error {
@@ -158,9 +145,9 @@ func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) e
 	if err != nil {
 		return err
 	}
-	oauthConfig, _ := s.getGoogleOauthConfig(credentials.ClientID, credentials.ClientSecret)
+	oauthClient, _ := s.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
 
-	token, err := oauthConfig.Exchange(ctx, code)
+	token, err := oauthClient.Exchange(ctx, code)
 	if err != nil {
 		return err
 	}
