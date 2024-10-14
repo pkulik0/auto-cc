@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -24,11 +23,6 @@ func init() {
 func main() {
 	version.EnsureSet()
 	log.Info().Str("version", version.Version).Str("build_time", version.BuildTime).Msg("AutoCC API")
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to load .env file")
-	}
 
 	c, err := parseConfig()
 	if err != nil {
