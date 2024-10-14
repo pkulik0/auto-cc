@@ -162,17 +162,19 @@ func (s *gormStore) GetCredentialsDeepLByID(ctx context.Context, id uint) (*mode
 }
 
 func (s *gormStore) RemoveCredentialsGoogle(ctx context.Context, id uint) error {
-	result := s.db.WithContext(ctx).Delete(&model.CredentialsGoogle{}, id)
-	if result.Error != nil {
-		return result.Error
-	}
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		result := tx.WithContext(ctx).Delete(&model.CredentialsGoogle{}, id)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	result = s.db.WithContext(ctx).Where("credentials_id = ?", id).Delete(&model.SessionGoogle{})
-	if result.Error != nil {
-		return result.Error
-	}
+		result = tx.WithContext(ctx).Where("credentials_id = ?", id).Delete(&model.SessionGoogle{})
+		if result.Error != nil {
+			return result.Error
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (s *gormStore) RemoveCredentialsDeepL(ctx context.Context, id uint) error {
