@@ -53,6 +53,8 @@
 					credentials = { ...credentials, deepl: [...credentials.deepl, deeplCred] };
 					break;
 			}
+			client_id = '';
+			secret = '';
 		} catch (error) {
 			console.error(error);
 		}
@@ -81,6 +83,9 @@
 			<DeepLTable credentials={credentials.deepl} />
 		</div>
 	{:else}
-		<Skeleton size="80" />
+		<div class="space-y-10">
+			<Skeleton size="80" />
+			<Skeleton size="80" />
+		</div>
 	{/if}
 </div>
