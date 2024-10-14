@@ -160,7 +160,12 @@ func (s *server) handlerSessionGoogleURL(w http.ResponseWriter, r *http.Request)
 	}
 
 	url, err := s.service.GetSessionGoogleURL(r.Context(), credentialsID, userID)
-	if err != nil {
+	switch err {
+	case nil:
+	case service.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
 		errLog(w, err, "failed to get google session url", http.StatusInternalServerError)
 		return
 	}
@@ -179,13 +184,14 @@ func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Req
 
 	state := r.FormValue("state")
 	code := r.FormValue("code")
-	if state == "" || code == "" {
-		errLog(w, nil, "missing state or code", http.StatusBadRequest)
-		return
-	}
 
 	err = s.service.CreateSessionGoogle(r.Context(), state, code)
-	if err != nil {
+	switch err {
+	case nil:
+	case service.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
 		errLog(w, err, "failed to create google session", http.StatusInternalServerError)
 		return
 	}
@@ -201,7 +207,12 @@ func (s *server) handlerUserSessionsGoogle(w http.ResponseWriter, r *http.Reques
 	}
 
 	sessions, err := s.service.GetSessionsGoogleByUser(r.Context(), userID)
-	if err != nil {
+	switch err {
+	case nil:
+	case service.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
 		errLog(w, err, "failed to get google sessions", http.StatusInternalServerError)
 		return
 	}
@@ -227,7 +238,12 @@ func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Reque
 	}
 
 	err = s.service.RemoveSessionGoogle(r.Context(), userID, uint(credentialsID))
-	if err != nil {
+	switch err {
+	case nil:
+	case service.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
 		errLog(w, err, "failed to remove google session", http.StatusInternalServerError)
 		return
 	}

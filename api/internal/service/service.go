@@ -122,6 +122,10 @@ func (s *service) getGoogleOauthConfig(clientID, clientSecret string) (*oauth2.C
 }
 
 func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID string) (string, error) {
+	if userID == "" {
+		return "", ErrInvalidInput
+	}
+
 	credentials, err := s.store.GetCredentialsGoogleByID(ctx, credentialsID)
 	if err != nil {
 		return "", err
@@ -141,6 +145,10 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 }
 
 func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) error {
+	if state == "" || code == "" {
+		return ErrInvalidInput
+	}
+
 	sessionState, err := s.store.GetSessionState(ctx, state)
 	if err != nil {
 		return err
