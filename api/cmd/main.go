@@ -39,14 +39,14 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create store")
 	}
-	service := service.New(store)
+	service := service.New(store, c.GoogleCallbackURL)
 
 	auth, err := auth.New(context.Background(), c.KeycloakURL, c.KeycloakRealm, c.KeycloakClientId, c.KeycloakClientSecret)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create auth")
 	}
-	server := server.New(service, auth)
 
+	server := server.New(service, auth, c.GoogleRedirectURL)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

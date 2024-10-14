@@ -44,6 +44,14 @@ export interface GetCredentialsResponse {
   deepl: CredentialsDeepL[];
 }
 
+export interface GetSessionGoogleURLResponse {
+  url: string;
+}
+
+export interface GetUserSessionsGoogleResponse {
+  credentialIds: number[];
+}
+
 function createBaseAddCredentialsGoogleRequest(): AddCredentialsGoogleRequest {
   return { clientId: "", clientSecret: "" };
 }
@@ -558,6 +566,138 @@ export const GetCredentialsResponse: MessageFns<GetCredentialsResponse> = {
     const message = createBaseGetCredentialsResponse();
     message.google = object.google?.map((e) => CredentialsGoogle.fromPartial(e)) || [];
     message.deepl = object.deepl?.map((e) => CredentialsDeepL.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetSessionGoogleURLResponse(): GetSessionGoogleURLResponse {
+  return { url: "" };
+}
+
+export const GetSessionGoogleURLResponse: MessageFns<GetSessionGoogleURLResponse> = {
+  encode(message: GetSessionGoogleURLResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.url !== "") {
+      writer.uint32(10).string(message.url);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSessionGoogleURLResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSessionGoogleURLResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.url = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSessionGoogleURLResponse {
+    return { url: isSet(object.url) ? globalThis.String(object.url) : "" };
+  },
+
+  toJSON(message: GetSessionGoogleURLResponse): unknown {
+    const obj: any = {};
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSessionGoogleURLResponse>, I>>(base?: I): GetSessionGoogleURLResponse {
+    return GetSessionGoogleURLResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSessionGoogleURLResponse>, I>>(object: I): GetSessionGoogleURLResponse {
+    const message = createBaseGetSessionGoogleURLResponse();
+    message.url = object.url ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserSessionsGoogleResponse(): GetUserSessionsGoogleResponse {
+  return { credentialIds: [] };
+}
+
+export const GetUserSessionsGoogleResponse: MessageFns<GetUserSessionsGoogleResponse> = {
+  encode(message: GetUserSessionsGoogleResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    writer.uint32(10).fork();
+    for (const v of message.credentialIds) {
+      writer.uint64(v);
+    }
+    writer.join();
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUserSessionsGoogleResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserSessionsGoogleResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag === 8) {
+            message.credentialIds.push(longToNumber(reader.uint64()));
+
+            continue;
+          }
+
+          if (tag === 10) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.credentialIds.push(longToNumber(reader.uint64()));
+            }
+
+            continue;
+          }
+
+          break;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserSessionsGoogleResponse {
+    return {
+      credentialIds: globalThis.Array.isArray(object?.credentialIds)
+        ? object.credentialIds.map((e: any) => globalThis.Number(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetUserSessionsGoogleResponse): unknown {
+    const obj: any = {};
+    if (message.credentialIds?.length) {
+      obj.credentialIds = message.credentialIds.map((e) => Math.round(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetUserSessionsGoogleResponse>, I>>(base?: I): GetUserSessionsGoogleResponse {
+    return GetUserSessionsGoogleResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetUserSessionsGoogleResponse>, I>>(
+    object: I,
+  ): GetUserSessionsGoogleResponse {
+    const message = createBaseGetUserSessionsGoogleResponse();
+    message.credentialIds = object.credentialIds?.map((e) => e) || [];
     return message;
   },
 };

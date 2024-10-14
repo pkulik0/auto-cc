@@ -1,6 +1,6 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
-import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse } from "./pb/autocc"
+import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/autocc"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -97,5 +97,57 @@ export const removeCredentials = async (type: "google" | "deepl", id: number): P
     });
     if (!res.ok) {
         throw new Error("Failed to remove client credential")
+    }
+}
+
+export const getUserSessionsGoogle = async (): Promise<number[]> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl("/sessions/google"), {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to get sessions")
+    }
+
+    const data = await res.arrayBuffer()
+    return GetUserSessionsGoogleResponse.decode(new Uint8Array(data)).credentialIds
+}
+
+export const getSessionGoogleURL = async (id: number): Promise<string> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/sessions/google/${id}`), {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to get session URL")
+    }
+
+    const data = await res.arrayBuffer()
+    return GetSessionGoogleURLResponse.decode(new Uint8Array(data)).url
+}
+
+export const removeSessionGoogle = async (id: number): Promise<void> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/sessions/google/${id}`), {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to remove session")
     }
 }

@@ -17,6 +17,8 @@
 		"client_id": "Client ID",
 		"client_secret": "Client Secret",
 		"no_credentials": "No credentials found",
-		"service": "Service"
+		"service": "Service",
+        "authenticate": "Authenticate",
+        "revoke": "Revoke"
 	}
 }

@@ -10,7 +10,7 @@
 package mock
 
 import (
-	context "context"
+	http "net/http"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -39,17 +39,16 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 	return m.recorder
 }
 
-// ValidateAccessToken mocks base method.
-func (m *MockAuth) ValidateAccessToken(arg0 context.Context, arg1 string) (string, error) {
+// AuthMiddleware mocks base method.
+func (m *MockAuth) AuthMiddleware(arg0 http.Handler) http.Handler {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateAccessToken", arg0, arg1)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "AuthMiddleware", arg0)
+	ret0, _ := ret[0].(http.Handler)
+	return ret0
 }
 
-// ValidateAccessToken indicates an expected call of ValidateAccessToken.
-func (mr *MockAuthMockRecorder) ValidateAccessToken(arg0, arg1 any) *gomock.Call {
+// AuthMiddleware indicates an expected call of AuthMiddleware.
+func (mr *MockAuthMockRecorder) AuthMiddleware(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccessToken", reflect.TypeOf((*MockAuth)(nil).ValidateAccessToken), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthMiddleware", reflect.TypeOf((*MockAuth)(nil).AuthMiddleware), arg0)
 }

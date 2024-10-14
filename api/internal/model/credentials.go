@@ -13,12 +13,14 @@ func secureSecret(s string) string {
 	return s[:lenVisible] + strings.Repeat("*", lenHidden)
 }
 
+// CredentialsDeepL is a model for storing DeepL API credentials.
 type CredentialsDeepL struct {
 	gorm.Model
 	Key   string
 	Usage uint
 }
 
+// ToProto converts the model to a protobuf message.
 func (c *CredentialsDeepL) ToProto() *pb.CredentialsDeepL {
 	return &pb.CredentialsDeepL{
 		Id:    uint64(c.ID),
@@ -27,6 +29,7 @@ func (c *CredentialsDeepL) ToProto() *pb.CredentialsDeepL {
 	}
 }
 
+// CredentialsGoogle is a model for storing Google API credentials.
 type CredentialsGoogle struct {
 	gorm.Model
 	ClientID     string
@@ -34,6 +37,7 @@ type CredentialsGoogle struct {
 	Usage        uint
 }
 
+// ToProto converts the model to a protobuf message.
 func (c *CredentialsGoogle) ToProto() *pb.CredentialsGoogle {
 	return &pb.CredentialsGoogle{
 		Id:           uint64(c.ID),

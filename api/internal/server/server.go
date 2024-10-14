@@ -16,14 +16,16 @@ import (
 )
 
 type server struct {
-	service service.Service
-	auth    auth.Auth
+	service           service.Service
+	auth              auth.Auth
+	googleRedirectURL string
 }
 
-func New(s service.Service, a auth.Auth) *server {
+func New(service service.Service, auth auth.Auth, googleRedirectURL string) *server {
 	return &server{
-		service: s,
-		auth:    a,
+		service:           service,
+		auth:              auth,
+		googleRedirectURL: googleRedirectURL,
 	}
 }
 
@@ -144,6 +146,95 @@ func (s *server) handlerRemoveCredentialsDeepL(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *server) handlerSessionGoogleURL(w http.ResponseWriter, r *http.Request) {
+	credentialsID, err := parsePathID(r)
+	if err != nil {
+		errLog(w, err, "failed to parse id", http.StatusBadRequest)
+		return
+	}
+
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	url, err := s.service.GetSessionGoogleURL(r.Context(), credentialsID, userID)
+	if err != nil {
+		errLog(w, err, "failed to get google session url", http.StatusInternalServerError)
+		return
+	}
+
+	var req pb.GetSessionGoogleURLResponse
+	req.Url = url
+	writePb(w, &req)
+}
+
+func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		errLog(w, err, "failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	state := r.FormValue("state")
+	code := r.FormValue("code")
+	if state == "" || code == "" {
+		errLog(w, nil, "missing state or code", http.StatusBadRequest)
+		return
+	}
+
+	err = s.service.CreateSessionGoogle(r.Context(), state, code)
+	if err != nil {
+		errLog(w, err, "failed to create google session", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, s.googleRedirectURL, http.StatusFound)
+}
+
+func (s *server) handlerUserSessionsGoogle(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	sessions, err := s.service.GetSessionsGoogleByUser(r.Context(), userID)
+	if err != nil {
+		errLog(w, err, "failed to get google sessions", http.StatusInternalServerError)
+		return
+	}
+
+	var resp pb.GetUserSessionsGoogleResponse
+	for _, s := range sessions {
+		resp.CredentialIds = append(resp.CredentialIds, uint64(s.CredentialsID))
+	}
+	writePb(w, &resp)
+}
+
+func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Request) {
+	credentialsID, err := parsePathID(r)
+	if err != nil {
+		errLog(w, err, "failed to parse id", http.StatusBadRequest)
+		return
+	}
+
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	err = s.service.RemoveSessionGoogle(r.Context(), userID, uint(credentialsID))
+	if err != nil {
+		errLog(w, err, "failed to remove google session", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func superuserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, isSuperuser, ok := auth.UserFromContext(r.Context())
@@ -167,12 +258,16 @@ func (s *server) Start(port uint16) error {
 	superuserMux.HandleFunc("DELETE /credentials/deepl/{id}", s.handlerRemoveCredentialsDeepL)
 
 	authMux := http.NewServeMux()
-	authMux.HandleFunc("GET /credentials", s.handlerCredentials)
 	authMux.Handle("/", superuserMiddleware(superuserMux))
+	authMux.HandleFunc("GET /credentials", s.handlerCredentials)
+	authMux.HandleFunc("GET /sessions/google", s.handlerUserSessionsGoogle)
+	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
+	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)
 	mux.Handle("/", s.auth.AuthMiddleware(authMux))
+	mux.HandleFunc("GET /sessions/google/callback", s.handlerSessionGoogleCallback)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

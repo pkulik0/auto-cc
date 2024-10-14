@@ -7,28 +7,58 @@
 		TableBodyRow,
 		TableHead,
 		TableHeadCell,
-		Button
+		Button,
+		Progressbar
 	} from 'flowbite-svelte';
 	import { TrashBinOutline } from 'flowbite-svelte-icons';
 	import { _ } from 'svelte-i18n';
-	import { removeCredentials } from '$lib/api';
+	import {
+		getSessionGoogleURL,
+		getUserSessionsGoogle,
+		removeCredentials,
+		removeSessionGoogle
+	} from '$lib/api';
 	import { isSuperuserStore } from '$lib/auth';
+	import { onMount } from 'svelte';
+
+	const quota = 10000; // Youtube API quota
 
 	export let credentials: CredentialsGoogle[];
+	let sessions: number[] = [];
+
+	onMount(async () => {
+		try {
+			sessions = await getUserSessionsGoogle();
+		} catch (error) {
+			console.error(error);
+		}
+	});
 
 	const remove = async (id: number) => {
 		try {
-			await removeCredentials("google", id)
+			await removeCredentials('google', id);
 			credentials = credentials.filter((c) => c.id !== id);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
+	const authenticate = async (id: number) => {
+		const url = await getSessionGoogleURL(id);
+		window.location.href = url;
+	};
+
+	const revoke = async (id: number) => {
+		try {
+			await removeSessionGoogle(id);
+			sessions = sessions.filter((s) => s !== id);
 		} catch (error) {
 			console.error(error);
 		}
 	};
 </script>
 
-<h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">
-	Google
-</h2>
+<h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Google</h2>
 
 <Table striped={true}>
 	<TableHead>
@@ -47,13 +77,25 @@
 		{/if}
 		{#each credentials as credential}
 			<TableBodyRow>
-				<TableBodyCell class="w-1/4">{credential.clientId}</TableBodyCell>
-				<TableBodyCell class="w-1/4">{credential.clientSecret}</TableBodyCell>
-				<TableBodyCell class="w-1/4">{credential.usage}</TableBodyCell>
-				<TableBodyCell class="w-1/4">
+				<TableBodyCell>{credential.clientId.substring(0, 30)}...</TableBodyCell>
+				<TableBodyCell>{credential.clientSecret}</TableBodyCell>
+				<TableBodyCell>
+					<Progressbar class="w-60" progress={credential.usage * 100 / quota} />
+				</TableBodyCell>
+				<TableBodyCell class="flex items-center space-x-2">
+					{#if sessions.includes(credential.id)}
+						<Button size="xs" outline on:click={() => revoke(credential.id)}>
+							{$_('credentials.revoke')}
+						</Button>
+					{:else}
+						<Button size="xs" outline color="green" on:click={() => authenticate(credential.id)}>
+							{$_('credentials.authenticate')}
+						</Button>
+					{/if}
+
 					{#if $isSuperuserStore}
 						<Button size="xs" outline color="red" on:click={() => remove(credential.id)}>
-							<TrashBinOutline class="w-4 h-4" />
+							<TrashBinOutline class="h-4 w-4" />
 						</Button>
 					{/if}
 				</TableBodyCell>

@@ -36,3 +36,11 @@ message GetCredentialsResponse {
     repeated CredentialsGoogle google = 1;
     repeated CredentialsDeepL deepl = 2;
 }
+
+message GetSessionGoogleURLResponse {
+    string url = 1;
+}
+
+message GetUserSessionsGoogleResponse {
+    repeated uint64 credential_ids = 1;
+}
