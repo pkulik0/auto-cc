@@ -157,3 +157,17 @@ func (mr *MockServiceMockRecorder) RemoveCredentialsGoogle(arg0, arg1 any) *gomo
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCredentialsGoogle", reflect.TypeOf((*MockService)(nil).RemoveCredentialsGoogle), arg0, arg1)
 }
+
+// RemoveSessionGoogle mocks base method.
+func (m *MockService) RemoveSessionGoogle(arg0 context.Context, arg1 string, arg2 uint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveSessionGoogle", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveSessionGoogle indicates an expected call of RemoveSessionGoogle.
+func (mr *MockServiceMockRecorder) RemoveSessionGoogle(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSessionGoogle", reflect.TypeOf((*MockService)(nil).RemoveSessionGoogle), arg0, arg1, arg2)
+}

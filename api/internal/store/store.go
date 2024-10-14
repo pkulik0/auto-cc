@@ -13,7 +13,7 @@ import (
 
 // Store is an interface for storing external services and client credentials.
 //
-//go:generate mockgen -destination=mocks/store.go -package=mocks . Store
+//go:generate mockgen -destination=../mock/store.go -package=mock . Store
 type Store interface {
 	// Transaction executes store operations in a transaction.
 	Transaction(ctx context.Context, f func(ctx context.Context, store Store) error) error
