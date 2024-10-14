@@ -46,11 +46,11 @@ var _ Service = &service{}
 
 type service struct {
 	store store.Store
-	oauth oauth.OAuth2
+	oauth oauth.Configs
 }
 
 // New creates a new service.
-func New(s store.Store, o oauth.OAuth2) *service {
+func New(s store.Store, o oauth.Configs) *service {
 	log.Info().Msg("created service")
 	return &service{
 		store: s,
@@ -160,7 +160,7 @@ func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) (
 		return "", err
 	}
 
-	_, err = s.store.CreateSessionGoogle(ctx, sessionState.UserID, token.AccessToken, token.RefreshToken, token.Expiry.Unix(), sessionState.CredentialsID, sessionState.Scopes)
+	_, err = s.store.CreateSessionGoogle(ctx, sessionState.UserID, token.AccessToken, token.RefreshToken, sessionState.Scopes, token.Expiry, sessionState.Credentials)
 	if err != nil {
 		return "", err
 	}
@@ -178,5 +178,5 @@ func (s *service) GetSessionsGoogleByUser(ctx context.Context, userID string) ([
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.store.GetUserSessionsGoogle(ctx, userID)
+	return s.store.GetSessionGoogleAll(ctx, userID)
 }

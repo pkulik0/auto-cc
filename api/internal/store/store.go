@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkulik0/autocc/api/internal/model"
 )
@@ -34,9 +35,16 @@ type Store interface {
 	RemoveCredentialsDeepL(ctx context.Context, id uint) error
 
 	// CreateSessionGoogle creates a new Google API session.
-	CreateSessionGoogle(ctx context.Context, userID, accessToken, refreshToken string, expiry int64, credentialsID uint, scopes string) (*model.SessionGoogle, error)
-	// GetUserSessionsGoogle returns all Google API sessions for a user.
-	GetUserSessionsGoogle(ctx context.Context, userID string) ([]model.SessionGoogle, error)
+	CreateSessionGoogle(ctx context.Context, userID, accessToken, refreshToken, scopes string, expiry time.Time, credentials model.CredentialsGoogle) (*model.SessionGoogle, error)
+	// GetSessionGoogleByCredentialsID returns a Google API session by credentials ID.
+	GetSessionGoogleByCredentialsID(ctx context.Context, credentialsID uint, userID string) (*model.SessionGoogle, error)
+	// GetSessionGoogleAll returns all Google API sessions for a user.
+	GetSessionGoogleAll(ctx context.Context, userID string) ([]model.SessionGoogle, error)
+	// GetUserSessionGoogleByQuotaAvailable returns a Google API session with N cost to spend.
+	// It updates the credentials usage and returns a function to revert the operation.
+	GetSessionGoogleByAvailableCost(ctx context.Context, userID string, cost uint) (*model.SessionGoogle, func() error, error)
+	// UpdateSessionGoogle updates a Google API session.
+	UpdateSessionGoogle(ctx context.Context, session *model.SessionGoogle) error
 	// RemoveSessionGoogle removes a Google API session.
 	RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error
 

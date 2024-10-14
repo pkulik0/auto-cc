@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"testing"
+	"time"
 
 	qt "github.com/frankban/quicktest"
 
@@ -108,27 +109,125 @@ func TestSessionGoogle(t *testing.T) {
 	c := qt.New(t)
 	s := setupStore(c)
 
-	userID, accessToken, refreshToken, expiry, credentialsID, scopes := randomString(c), randomString(c), randomString(c), int64(1), uint(1), randomString(c)
+	credentials, err := s.AddCredentialsGoogle(context.Background(), "client", "secret")
+	c.Assert(err, qt.IsNil)
 
-	session, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, expiry, credentialsID, scopes)
+	userID, accessToken, refreshToken, expiry, scopes := randomString(c), randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+
+	session, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
 	c.Assert(err, qt.IsNil)
 	c.Assert(session.UserID, qt.Equals, userID)
 	c.Assert(session.AccessToken, qt.Equals, accessToken)
 	c.Assert(session.RefreshToken, qt.Equals, refreshToken)
 	c.Assert(session.Expiry, qt.Equals, expiry)
-	c.Assert(session.CredentialsID, qt.Equals, credentialsID)
+	c.Assert(session.CredentialsID, qt.Equals, credentials.ID)
 	c.Assert(session.Scopes, qt.Equals, scopes)
 
-	sessions, err := s.GetUserSessionsGoogle(context.Background(), userID)
+	retrieved, err := s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
 	c.Assert(err, qt.IsNil)
-	c.Assert(sessions, qt.Contains, *session)
+	c.Assert(retrieved, qt.DeepEquals, session)
 
-	err = s.RemoveSessionGoogle(context.Background(), userID, credentialsID)
+	err = s.RemoveSessionGoogle(context.Background(), userID, credentials.ID)
 	c.Assert(err, qt.IsNil)
 
-	sessions, err = s.GetUserSessionsGoogle(context.Background(), userID)
+	_, err = s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
+	c.Assert(err, qt.IsNotNil)
+}
+
+func TestUpdateSessionGoogle(t *testing.T) {
+	c := qt.New(t)
+	s := setupStore(c)
+
+	credentials, err := s.AddCredentialsGoogle(context.Background(), "client", "secret")
 	c.Assert(err, qt.IsNil)
-	c.Assert(sessions, qt.Not(qt.Contains), *session)
+
+	userID, accessToken, refreshToken, expiry, scopes := randomString(c), randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+
+	session, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
+	c.Assert(err, qt.IsNil)
+
+	newAccessToken, newRefreshToken := randomString(c), randomString(c)
+	session.AccessToken = newAccessToken
+	session.RefreshToken = newRefreshToken
+
+	err = s.UpdateSessionGoogle(context.Background(), session)
+	c.Assert(err, qt.IsNil)
+
+	retrieved, err := s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
+	c.Assert(err, qt.IsNil)
+	c.Assert(retrieved, qt.DeepEquals, session)
+}
+
+func TestGetSessionGoogleAll(t *testing.T) {
+	c := qt.New(t)
+	s := setupStore(c)
+
+	credentials, err := s.AddCredentialsGoogle(context.Background(), "client", "secret")
+	c.Assert(err, qt.IsNil)
+
+	userID, accessToken, refreshToken, expiry, scopes := randomString(c), randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+	session1, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
+	c.Assert(err, qt.IsNil)
+
+	accessToken, refreshToken, expiry, scopes = randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+	session2, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
+	c.Assert(err, qt.IsNil)
+
+	sessions, err := s.GetSessionGoogleAll(context.Background(), userID)
+	c.Assert(err, qt.IsNil)
+
+	c.Assert(sessions, qt.Contains, *session1)
+	c.Assert(sessions, qt.Contains, *session2)
+}
+
+func TestGetSessionGoogleByCredentialsID(t *testing.T) {
+	c := qt.New(t)
+	s := setupStore(c)
+
+	credentials, err := s.AddCredentialsGoogle(context.Background(), "client", "secret")
+	c.Assert(err, qt.IsNil)
+
+	userID, accessToken, refreshToken, expiry, scopes := randomString(c), randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+	session, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
+	c.Assert(err, qt.IsNil)
+
+	retrieved, err := s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
+	c.Assert(err, qt.IsNil)
+	c.Assert(retrieved, qt.DeepEquals, session)
+}
+
+func TestGetSessionGoogleByAvailableCost(t *testing.T) {
+	c := qt.New(t)
+	s := setupStore(c)
+
+	credentials, err := s.AddCredentialsGoogle(context.Background(), "client", "secret")
+	c.Assert(err, qt.IsNil)
+
+	userID, accessToken, refreshToken, expiry, scopes := randomString(c), randomString(c), randomString(c), time.Now().Round(time.Minute), randomString(c)
+
+	session, err := s.CreateSessionGoogle(context.Background(), userID, accessToken, refreshToken, scopes, expiry, *credentials)
+	c.Assert(err, qt.IsNil)
+
+	newSession, revert, err := s.GetSessionGoogleByAvailableCost(context.Background(), userID, 1000)
+	c.Assert(err, qt.IsNil)
+	c.Assert(newSession.ID, qt.DeepEquals, session.ID)
+	c.Assert(newSession.Credentials.Usage, qt.Equals, uint(1000))
+
+	retrieved, err := s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
+	c.Assert(err, qt.IsNil)
+	c.Assert(retrieved.Credentials.Usage, qt.Equals, uint(1000))
+
+	retrieved, _, err = s.GetSessionGoogleByAvailableCost(context.Background(), userID, 500)
+	c.Assert(err, qt.IsNil)
+	c.Assert(retrieved.ID, qt.DeepEquals, session.ID)
+	c.Assert(retrieved.Credentials.Usage, qt.Equals, uint(1500))
+
+	err = revert()
+	c.Assert(err, qt.IsNil)
+
+	retrieved, err = s.GetSessionGoogleByCredentialsID(context.Background(), credentials.ID, userID)
+	c.Assert(err, qt.IsNil)
+	c.Assert(retrieved.Credentials.Usage, qt.Equals, uint(500))
 }
 
 func TestTransaction(t *testing.T) {
@@ -217,10 +316,10 @@ func TestContext(t *testing.T) {
 	err = s.RemoveCredentialsDeepL(ctx, 1)
 	c.Assert(err, qt.IsNotNil)
 
-	_, err = s.CreateSessionGoogle(ctx, randomString(c), randomString(c), randomString(c), int64(1), uint(1), randomString(c))
+	_, err = s.CreateSessionGoogle(ctx, randomString(c), randomString(c), randomString(c), randomString(c), time.Now(), model.CredentialsGoogle{})
 	c.Assert(err, qt.IsNotNil)
 
-	_, err = s.GetUserSessionsGoogle(ctx, randomString(c))
+	_, err = s.GetSessionGoogleAll(ctx, randomString(c))
 	c.Assert(err, qt.IsNotNil)
 
 	err = s.RemoveSessionGoogle(ctx, randomString(c), uint(1))
@@ -230,6 +329,12 @@ func TestContext(t *testing.T) {
 	c.Assert(err, qt.IsNotNil)
 
 	_, err = s.GetSessionState(ctx, randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	_, _, err = s.GetSessionGoogleByAvailableCost(ctx, randomString(c), 1)
+	c.Assert(err, qt.IsNotNil)
+
+	_ = s.UpdateSessionGoogle(ctx, &model.SessionGoogle{})
 	c.Assert(err, qt.IsNotNil)
 
 	err = s.Transaction(ctx, func(ctx context.Context, store store.Store) error {

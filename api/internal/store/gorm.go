@@ -3,12 +3,15 @@ package store
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/pkulik0/autocc/api/internal/model"
+	"github.com/pkulik0/autocc/api/internal/quota"
 )
 
 var _ Store = &gormStore{}
@@ -145,13 +148,13 @@ func (s *gormStore) RemoveCredentialsDeepL(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (s *gormStore) CreateSessionGoogle(ctx context.Context, userID, accessToken, refreshToken string, expiry int64, credentialsID uint, scopes string) (*model.SessionGoogle, error) {
+func (s *gormStore) CreateSessionGoogle(ctx context.Context, userID, accessToken, refreshToken, scopes string, expiry time.Time, credentials model.CredentialsGoogle) (*model.SessionGoogle, error) {
 	session := &model.SessionGoogle{
 		UserID:        userID,
 		AccessToken:   accessToken,
 		RefreshToken:  refreshToken,
 		Expiry:        expiry,
-		CredentialsID: credentialsID,
+		CredentialsID: credentials.ID,
 		Scopes:        scopes,
 	}
 
@@ -160,13 +163,31 @@ func (s *gormStore) CreateSessionGoogle(ctx context.Context, userID, accessToken
 		return nil, result.Error
 	}
 
+	session.Credentials = credentials
 	return session, nil
 }
 
-func (s *gormStore) GetUserSessionsGoogle(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
+func (s *gormStore) GetSessionGoogleByCredentialsID(ctx context.Context, credentialsID uint, userID string) (*model.SessionGoogle, error) {
+	var session model.SessionGoogle
+
+	result := s.db.WithContext(ctx).
+		Preload("Credentials").
+		Where("credentials_id = ? AND user_id = ?", credentialsID, userID).
+		First(&session)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &session, nil
+}
+
+func (s *gormStore) GetSessionGoogleAll(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
 	var sessions []model.SessionGoogle
 
-	result := s.db.WithContext(ctx).Where("user_id = ?", userID).Find(&sessions)
+	result := s.db.WithContext(ctx).
+		Preload("Credentials").
+		Where("user_id = ?", userID).
+		Find(&sessions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -202,10 +223,53 @@ func (s *gormStore) SaveSessionState(ctx context.Context, credentialsID uint, us
 func (s *gormStore) GetSessionState(ctx context.Context, state string) (*model.SessionState, error) {
 	var sessionState model.SessionState
 
-	result := s.db.WithContext(ctx).Where("state = ?", state).First(&sessionState)
+	result := s.db.WithContext(ctx).Preload("Credentials").Where("state = ?", state).First(&sessionState)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return &sessionState, nil
+}
+
+func (s *gormStore) GetSessionGoogleByAvailableCost(ctx context.Context, userID string, cost uint) (*model.SessionGoogle, func() error, error) {
+	var session model.SessionGoogle
+
+	maxUsage := quota.Google - cost
+
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		result := tx.Preload("Credentials").
+			Joins("JOIN credentials_google ON credentials_google.id = sessions_google.credentials_id").
+			Where("user_id = ? AND credentials_google.usage < ?", userID, maxUsage).
+			Order("credentials_google.usage").
+			Clauses(clause.Locking{Strength: "UPDATE", Table: clause.Table{Name: "credentials_google"}}).
+			First(&session)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		result = tx.Model(&session.Credentials).Update("usage", gorm.Expr("usage + ?", cost))
+		if result.Error != nil {
+			return result.Error
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	revert := func() error {
+		return s.db.WithContext(ctx).Model(&session.Credentials).Update("usage", gorm.Expr("usage - ?", cost)).Error
+	}
+
+	session.Credentials.Usage += cost
+	return &session, revert, nil
+}
+
+func (s *gormStore) UpdateSessionGoogle(ctx context.Context, session *model.SessionGoogle) error {
+	result := s.db.WithContext(ctx).Save(session)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }

@@ -20,6 +20,11 @@ type CredentialsDeepL struct {
 	Usage uint
 }
 
+// TableName returns the table name for the model.
+func (c *CredentialsDeepL) TableName() string {
+	return "credentials_deepl"
+}
+
 // ToProto converts the model to a protobuf message.
 func (c *CredentialsDeepL) ToProto() *pb.CredentialsDeepL {
 	return &pb.CredentialsDeepL{
@@ -35,6 +40,11 @@ type CredentialsGoogle struct {
 	ClientID     string
 	ClientSecret string
 	Usage        uint
+}
+
+// TableName returns the table name for the model.
+func (c *CredentialsGoogle) TableName() string {
+	return "credentials_google"
 }
 
 // ToProto converts the model to a protobuf message.
