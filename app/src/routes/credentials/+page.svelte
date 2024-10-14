@@ -12,6 +12,7 @@
 	import GoogleTable from './GoogleTable.svelte';
 	import DeepLTable from './DeepLTable.svelte';
 	import { _ } from 'svelte-i18n';
+	import { fade } from 'svelte/transition';
 
 	let credentials: Credentials | null = null;
 
@@ -59,18 +60,7 @@
 </script>
 
 <div class="space-y-8">
-	<div class="space-y-8">
-		{#if credentials}
-			<GoogleTable credentials={credentials.google} />
-			<DeepLTable credentials={credentials.deepl} />
-		{:else}
-			<Skeleton size="xxl" />
-			<Skeleton size="xxl" />
-		{/if}
-	</div>
-
 	{#if $isSuperuserStore}
-		<Hr />
 		<h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Add new credential</h2>
 		<div class="flex space-x-4">
 			<Select placeholder={$_('credentials.service')} items={typeItems} bind:value={selectedType} />
@@ -82,5 +72,15 @@
 				<PlusOutline class="h-6 w-6" />
 			</Button>
 		</div>
+		<Hr />
+	{/if}
+
+	{#if credentials}
+		<div class="space-y-10" transition:fade>
+			<GoogleTable credentials={credentials.google} />
+			<DeepLTable credentials={credentials.deepl} />
+		</div>
+	{:else}
+		<Skeleton size="80" />
 	{/if}
 </div>
