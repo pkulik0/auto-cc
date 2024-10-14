@@ -268,7 +268,7 @@ func superuserMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) Start(port uint16) error {
+func (s *server) getMux() *http.ServeMux {
 	superuserMux := http.NewServeMux()
 	superuserMux.HandleFunc("POST /credentials/google", s.handlerAddCredentialsGoogle)
 	superuserMux.HandleFunc("POST /credentials/deepl", s.handlerAddCredentialsDeepL)
@@ -287,6 +287,10 @@ func (s *server) Start(port uint16) error {
 	mux.Handle("/", s.auth.AuthMiddleware(authMux))
 	mux.HandleFunc("GET /sessions/google/callback", s.handlerSessionGoogleCallback)
 
+	return mux
+}
+
+func (s *server) Start(port uint16) error {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
@@ -295,5 +299,5 @@ func (s *server) Start(port uint16) error {
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Info().Str("address", addr).Msg("starting server")
-	return http.ListenAndServe(addr, logMiddleware(c.Handler(mux)))
+	return http.ListenAndServe(addr, logMiddleware(c.Handler(s.getMux())))
 }
