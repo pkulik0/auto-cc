@@ -58,10 +58,8 @@
 	};
 </script>
 
-<h1 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Credentials</h1>
-
-<div class="m-10 space-y-8">
-	<div class="space-y-4">
+<div class="space-y-8">
+	<div class="space-y-8">
 		{#if credentials}
 			<GoogleTable credentials={credentials.google} />
 			<DeepLTable credentials={credentials.deepl} />
