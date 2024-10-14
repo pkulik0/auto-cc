@@ -123,7 +123,8 @@ export const getSessionGoogleURL = async (id: number): Promise<string> => {
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/sessions/google/${id}`), {
+    const redirectUrl = encodeURIComponent(`${window.location.href}`)
+    const res = await fetch(getApiUrl(`/sessions/google/${id}?redirect_url=${redirectUrl}`), {
         headers: {
             Authorization: `Bearer ${token}`
         }

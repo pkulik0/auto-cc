@@ -21,7 +21,6 @@ type config struct {
 	KeycloakClientSecret string `mapstructure:"keycloak_client_secret"`
 
 	GoogleCallbackURL string `mapstructure:"google_callback_url"`
-	GoogleRedirectURL string `mapstructure:"google_redirect_url"`
 }
 
 const (
@@ -41,7 +40,6 @@ const (
 	envKeycloakClientSecret = "KEYCLOAK_CLIENT_SECRET"
 
 	envGoogleCallbackURL = "GOOGLE_CALLBACK_URL"
-	envGoogleRedirectURL = "GOOGLE_REDIRECT_URL"
 )
 
 func bindEnvs(key ...string) error {
@@ -71,7 +69,7 @@ func parseConfig() (*config, error) {
 		envPort,
 		envPostgresHost, envPostgresPort, envPostgresUser, envPostgresPass, envPostgresDB,
 		envKeycloakURL, envKeycloakRealm, envKeycloakClientId, envKeycloakClientSecret,
-		envGoogleCallbackURL, envGoogleRedirectURL,
+		envGoogleCallbackURL,
 	)
 	if err != nil {
 		return nil, err
@@ -86,7 +84,6 @@ func parseConfig() (*config, error) {
 	viper.SetDefault(envKeycloakURL, "https://sso.ony.sh")
 	viper.SetDefault(envKeycloakRealm, "onysh")
 	viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
-	viper.SetDefault(envGoogleRedirectURL, "http://localhost:5173/credentials")
 
 	err = viper.ReadInConfig()
 	switch err.(type) {

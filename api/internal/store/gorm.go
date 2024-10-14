@@ -182,12 +182,13 @@ func (s *gormStore) RemoveSessionGoogle(ctx context.Context, userID string, cred
 	return nil
 }
 
-func (s *gormStore) SaveSessionState(ctx context.Context, credentialsID uint, userID, state string, scopes string) error {
+func (s *gormStore) SaveSessionState(ctx context.Context, credentialsID uint, userID, state, scopes, redirectURL string) error {
 	sessionState := &model.SessionState{
 		UserID:        userID,
 		State:         state,
 		CredentialsID: credentialsID,
 		Scopes:        scopes,
+		RedirectURL:   redirectURL,
 	}
 
 	result := s.db.WithContext(ctx).Create(sessionState)

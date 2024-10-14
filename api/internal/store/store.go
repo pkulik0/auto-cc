@@ -41,7 +41,7 @@ type Store interface {
 	RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error
 
 	// SaveSessionState saves a state value used in OAuth2.
-	SaveSessionState(ctx context.Context, credentialsID uint, userID, state string, scopes string) error
+	SaveSessionState(ctx context.Context, credentialsID uint, userID, state, scopes, redirectURL string) error
 	// GetSessionState returns a state value used in OAuth2.
 	GetSessionState(ctx context.Context, state string) (*model.SessionState, error)
 }

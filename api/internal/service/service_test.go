@@ -23,7 +23,7 @@ func TestService(t *testing.T) {
 	testCases := []struct {
 		name      string
 		setupMock func(mockStore *mock.MockStore, mockOAuth *mock.MockOAuth2Client)
-		test      func(s service.Service)
+		test      func(c *qt.C, s service.Service)
 	}{
 		{
 			name: "AddCredentialsGoogle",
@@ -35,7 +35,7 @@ func TestService(t *testing.T) {
 
 				store.EXPECT().AddCredentialsGoogle(gomock.Any(), "clientID", "clientSecret").Return(nil, retErr).Times(1).After(call)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				credentials, err := s.AddCredentialsGoogle(context.Background(), "clientID", "clientSecret")
 				c.Assert(err, qt.IsNil)
 				c.Assert(credentials.ClientID, qt.Equals, "clientID")
@@ -56,7 +56,7 @@ func TestService(t *testing.T) {
 
 				store.EXPECT().AddCredentialsDeepL(gomock.Any(), "key").Return(nil, retErr).Times(1).After(call)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				credentials, err := s.AddCredentialsDeepL(context.Background(), "key")
 				c.Assert(err, qt.IsNil)
 				c.Assert(credentials.Key, qt.Equals, "key")
@@ -79,7 +79,7 @@ func TestService(t *testing.T) {
 				store.EXPECT().GetCredentialsGoogleAll(gomock.Any()).Return([]model.CredentialsGoogle{{ClientID: "clientID", ClientSecret: "clientSecret"}}, nil).Times(1)
 				store.EXPECT().GetCredentialsDeepLAll(gomock.Any()).Return(nil, retErr).Times(1)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				g, d, err := s.GetCredentials(context.Background())
 				c.Assert(err, qt.IsNil)
 				c.Assert(g, qt.DeepEquals, []model.CredentialsGoogle{{ClientID: "clientID", ClientSecret: "clientSecret"}})
@@ -98,7 +98,7 @@ func TestService(t *testing.T) {
 				store.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(retErr).Times(1)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				err := s.RemoveCredentialsGoogle(context.Background(), 1)
 				c.Assert(err, qt.IsNil)
 
@@ -112,7 +112,7 @@ func TestService(t *testing.T) {
 				store.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(retErr).Times(1)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				err := s.RemoveCredentialsDeepL(context.Background(), 1)
 				c.Assert(err, qt.IsNil)
 
@@ -125,24 +125,27 @@ func TestService(t *testing.T) {
 			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Client) {
 				oauth.EXPECT().AuthCodeURL(gomock.Any(), oauth2.AccessTypeOffline).Return("url").Times(1)
 				store.EXPECT().GetCredentialsGoogleByID(gomock.Any(), uint(1)).Return(&model.CredentialsGoogle{ClientID: "clientID"}, nil).Times(1)
-				store.EXPECT().SaveSessionState(gomock.Any(), uint(1), "userID", gomock.Any(), gomock.Any()).Return(nil).Times(1)
+				store.EXPECT().SaveSessionState(gomock.Any(), uint(1), "userID", gomock.Any(), gomock.Any(), "http://example.com").Return(nil).Times(1)
 
 				store.EXPECT().GetCredentialsGoogleByID(gomock.Any(), uint(1)).Return(nil, retErr).Times(1)
 
 				store.EXPECT().GetCredentialsGoogleByID(gomock.Any(), uint(1)).Return(&model.CredentialsGoogle{ClientID: "clientID"}, nil).Times(1)
-				store.EXPECT().SaveSessionState(gomock.Any(), uint(1), "userID", gomock.Any(), gomock.Any()).Return(retErr).Times(1)
+				store.EXPECT().SaveSessionState(gomock.Any(), uint(1), "userID", gomock.Any(), gomock.Any(), "http://example.com").Return(retErr).Times(1)
 			},
-			test: func(s service.Service) {
-				_, err := s.GetSessionGoogleURL(context.Background(), 1, "userID")
+			test: func(c *qt.C, s service.Service) {
+				_, err := s.GetSessionGoogleURL(context.Background(), 1, "userID", "http://example.com")
 				c.Assert(err, qt.IsNil)
 
-				_, err = s.GetSessionGoogleURL(context.Background(), 1, "userID")
+				_, err = s.GetSessionGoogleURL(context.Background(), 1, "userID", "http://example.com")
 				c.Assert(err, qt.IsNotNil)
 
-				_, err = s.GetSessionGoogleURL(context.Background(), 1, "userID")
+				_, err = s.GetSessionGoogleURL(context.Background(), 1, "userID", "http://example.com")
 				c.Assert(err, qt.Equals, retErr)
 
-				_, err = s.GetSessionGoogleURL(context.Background(), 1, "")
+				_, err = s.GetSessionGoogleURL(context.Background(), 1, "", "http://example.com")
+				c.Assert(err, qt.Equals, service.ErrInvalidInput)
+
+				_, err = s.GetSessionGoogleURL(context.Background(), 1, "abc", "invalid_url")
 				c.Assert(err, qt.Equals, service.ErrInvalidInput)
 			},
 		},
@@ -153,6 +156,7 @@ func TestService(t *testing.T) {
 					CredentialsID: 1,
 					UserID:        "userID",
 					Scopes:        "scopes",
+					RedirectURL:   "http://example.com",
 				}
 				cred := &model.CredentialsGoogle{
 					ClientID:     "clientID",
@@ -188,23 +192,24 @@ func TestService(t *testing.T) {
 				oauth.EXPECT().Exchange(gomock.Any(), "code").Return(token, nil).Times(1)
 				store.EXPECT().CreateSessionGoogle(gomock.Any(), "userID", "access", "refresh", gomock.Any(), uint(1), "scopes").Return(nil, retErr).Times(1)
 			},
-			test: func(s service.Service) {
-				err := s.CreateSessionGoogle(context.Background(), "state", "code")
+			test: func(c *qt.C, s service.Service) {
+				url, err := s.CreateSessionGoogle(context.Background(), "state", "code")
 				c.Assert(err, qt.IsNil)
+				c.Assert(url, qt.Equals, "http://example.com")
 
-				err = s.CreateSessionGoogle(context.Background(), "state", "code")
+				url, err = s.CreateSessionGoogle(context.Background(), "state", "code")
 				c.Assert(err, qt.Equals, retErr)
 
-				err = s.CreateSessionGoogle(context.Background(), "state", "code")
+				url, err = s.CreateSessionGoogle(context.Background(), "state", "code")
 				c.Assert(err, qt.Equals, retErr)
 
-				err = s.CreateSessionGoogle(context.Background(), "state", "code")
+				url, err = s.CreateSessionGoogle(context.Background(), "state", "code")
 				c.Assert(err, qt.Equals, retErr)
 
-				err = s.CreateSessionGoogle(context.Background(), "state", "code")
+				url, err = s.CreateSessionGoogle(context.Background(), "state", "code")
 				c.Assert(err, qt.Equals, retErr)
 
-				err = s.CreateSessionGoogle(context.Background(), "", "")
+				url, err = s.CreateSessionGoogle(context.Background(), "", "")
 				c.Assert(err, qt.Equals, service.ErrInvalidInput)
 			},
 		},
@@ -214,7 +219,7 @@ func TestService(t *testing.T) {
 				store.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(retErr).Times(1)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				err := s.RemoveSessionGoogle(context.Background(), "userID", 1)
 				c.Assert(err, qt.IsNil)
 
@@ -231,7 +236,7 @@ func TestService(t *testing.T) {
 				store.EXPECT().GetUserSessionsGoogle(gomock.Any(), "userID").Return([]model.SessionGoogle{{CredentialsID: 1}}, nil).Times(1)
 				store.EXPECT().GetUserSessionsGoogle(gomock.Any(), "userID").Return(nil, retErr).Times(1)
 			},
-			test: func(s service.Service) {
+			test: func(c *qt.C, s service.Service) {
 				sessions, err := s.GetSessionsGoogleByUser(context.Background(), "userID")
 				c.Assert(err, qt.IsNil)
 				c.Assert(sessions, qt.DeepEquals, []model.SessionGoogle{{CredentialsID: 1}})
@@ -255,7 +260,7 @@ func TestService(t *testing.T) {
 			tc.setupMock(store, oauthGoogle)
 
 			s := service.New(store, oauth)
-			tc.test(s)
+			tc.test(c, s)
 		})
 	}
 }

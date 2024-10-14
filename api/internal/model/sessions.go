@@ -22,4 +22,5 @@ type SessionState struct {
 	CredentialsID uint
 	Credentials   CredentialsGoogle `gorm:"foreignKey:CredentialsID"`
 	Scopes        string
+	RedirectURL   string
 }

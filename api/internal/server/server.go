@@ -16,16 +16,14 @@ import (
 )
 
 type server struct {
-	service           service.Service
-	auth              auth.Auth
-	googleRedirectURL string
+	service service.Service
+	auth    auth.Auth
 }
 
-func New(service service.Service, auth auth.Auth, googleRedirectURL string) *server {
+func New(service service.Service, auth auth.Auth) *server {
 	return &server{
-		service:           service,
-		auth:              auth,
-		googleRedirectURL: googleRedirectURL,
+		service: service,
+		auth:    auth,
 	}
 }
 
@@ -153,13 +151,15 @@ func (s *server) handlerSessionGoogleURL(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	redirectURL := r.URL.Query().Get("redirect_url")
+
 	userID, _, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
 		return
 	}
 
-	url, err := s.service.GetSessionGoogleURL(r.Context(), credentialsID, userID)
+	url, err := s.service.GetSessionGoogleURL(r.Context(), credentialsID, userID, redirectURL)
 	switch err {
 	case nil:
 	case service.ErrInvalidInput:
@@ -185,7 +185,7 @@ func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Req
 	state := r.FormValue("state")
 	code := r.FormValue("code")
 
-	err = s.service.CreateSessionGoogle(r.Context(), state, code)
+	url, err := s.service.CreateSessionGoogle(r.Context(), state, code)
 	switch err {
 	case nil:
 	case service.ErrInvalidInput:
@@ -196,7 +196,7 @@ func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	http.Redirect(w, r, s.googleRedirectURL, http.StatusFound)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func (s *server) handlerUserSessionsGoogle(w http.ResponseWriter, r *http.Request) {

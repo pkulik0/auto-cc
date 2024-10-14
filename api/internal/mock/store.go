@@ -219,17 +219,17 @@ func (mr *MockStoreMockRecorder) RemoveSessionGoogle(arg0, arg1, arg2 any) *gomo
 }
 
 // SaveSessionState mocks base method.
-func (m *MockStore) SaveSessionState(arg0 context.Context, arg1 uint, arg2, arg3, arg4 string) error {
+func (m *MockStore) SaveSessionState(arg0 context.Context, arg1 uint, arg2, arg3, arg4, arg5 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveSessionState", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "SaveSessionState", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveSessionState indicates an expected call of SaveSessionState.
-func (mr *MockStoreMockRecorder) SaveSessionState(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) SaveSessionState(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSessionState", reflect.TypeOf((*MockStore)(nil).SaveSessionState), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSessionState", reflect.TypeOf((*MockStore)(nil).SaveSessionState), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // Transaction mocks base method.

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"regexp"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
@@ -32,9 +33,9 @@ type Service interface {
 	RemoveCredentialsDeepL(ctx context.Context, id uint) error
 
 	// GetSessionGoogleURL returns a URL for authenticating with Google.
-	GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID string) (string, error)
+	GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID, redirectURL string) (string, error)
 	// CreateSessionGoogle creates a new Google API session.
-	CreateSessionGoogle(ctx context.Context, state, code string) error
+	CreateSessionGoogle(ctx context.Context, state, code string) (string, error)
 	// RemoveSessionGoogle removes a Google API session.
 	RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error
 	// GetSessionsGoogleByUser returns all Google API sessions for a user.
@@ -108,8 +109,15 @@ func generateState() (string, error) {
 	return hex.EncodeToString(randomBytes), nil
 }
 
-func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID string) (string, error) {
+var (
+	urlRegex = regexp.MustCompile(`^https?://`)
+)
+
+func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID, redirectURL string) (string, error) {
 	if userID == "" {
+		return "", ErrInvalidInput
+	}
+	if !urlRegex.MatchString(redirectURL) {
 		return "", ErrInvalidInput
 	}
 
@@ -123,7 +131,7 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 	if err != nil {
 		return "", err
 	}
-	err = s.store.SaveSessionState(ctx, credentialsID, userID, state, scopes)
+	err = s.store.SaveSessionState(ctx, credentialsID, userID, state, scopes, redirectURL)
 	if err != nil {
 		return "", err
 	}
@@ -131,29 +139,32 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 	return oauthClient.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
 }
 
-func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) error {
+func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) (string, error) {
 	if state == "" || code == "" {
-		return ErrInvalidInput
+		return "", ErrInvalidInput
 	}
 
 	sessionState, err := s.store.GetSessionState(ctx, state)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	credentials, err := s.store.GetCredentialsGoogleByID(ctx, sessionState.CredentialsID)
 	if err != nil {
-		return err
+		return "", err
 	}
 	oauthClient, _ := s.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
 
 	token, err := oauthClient.Exchange(ctx, code)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	_, err = s.store.CreateSessionGoogle(ctx, sessionState.UserID, token.AccessToken, token.RefreshToken, token.Expiry.Unix(), sessionState.CredentialsID, sessionState.Scopes)
-	return err
+	if err != nil {
+		return "", err
+	}
+	return sessionState.RedirectURL, nil
 }
 
 func (s *service) RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error {

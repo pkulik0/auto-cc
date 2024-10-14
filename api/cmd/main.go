@@ -42,7 +42,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create auth")
 	}
 
-	server := server.New(service, auth, c.GoogleRedirectURL)
+	server := server.New(service, auth)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

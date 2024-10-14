@@ -88,9 +88,9 @@ func TestSessionState(t *testing.T) {
 	c := qt.New(t)
 	s := setupStore(c)
 
-	credentialsID, userID, state, scopes := uint(1), randomString(c), randomString(c), randomString(c)
+	credentialsID, userID, state, scopes, url := uint(1), randomString(c), randomString(c), randomString(c), "https://example.com"
 
-	err := s.SaveSessionState(context.Background(), credentialsID, userID, state, scopes)
+	err := s.SaveSessionState(context.Background(), credentialsID, userID, state, scopes, url)
 	c.Assert(err, qt.IsNil)
 
 	retrieved, err := s.GetSessionState(context.Background(), state)
@@ -226,7 +226,7 @@ func TestContext(t *testing.T) {
 	err = s.RemoveSessionGoogle(ctx, randomString(c), uint(1))
 	c.Assert(err, qt.IsNotNil)
 
-	err = s.SaveSessionState(ctx, uint(1), randomString(c), randomString(c), randomString(c))
+	err = s.SaveSessionState(ctx, uint(1), randomString(c), randomString(c), randomString(c), "https://example.com")
 	c.Assert(err, qt.IsNotNil)
 
 	_, err = s.GetSessionState(ctx, randomString(c))
