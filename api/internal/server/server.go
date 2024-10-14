@@ -72,6 +72,7 @@ func (s *server) handlerAddCredentialsGoogle(w http.ResponseWriter, r *http.Requ
 		return
 	default:
 		errLog(w, err, "failed to create google credentials", http.StatusInternalServerError)
+		return
 	}
 
 	writePb(w, &pb.AddCredentialsGoogleResponse{Credentials: credentials.ToProto()})
@@ -93,6 +94,7 @@ func (s *server) handlerAddCredentialsDeepL(w http.ResponseWriter, r *http.Reque
 		return
 	default:
 		errLog(w, err, "failed to create deepl credentials", http.StatusInternalServerError)
+		return
 	}
 
 	writePb(w, &pb.AddCredentialsDeepLResponse{Credentials: credentials.ToProto()})
