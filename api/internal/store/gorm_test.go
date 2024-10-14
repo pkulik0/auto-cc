@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	qt "github.com/frankban/quicktest"
+
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/store"
 )
@@ -183,4 +184,56 @@ func TestTransaction(t *testing.T) {
 	newDeepLAll, err := s.GetCredentialsDeepLAll(context.Background())
 	c.Assert(err, qt.IsNil)
 	c.Assert(deeplAll, qt.DeepEquals, newDeepLAll)
+}
+
+func TestContext(t *testing.T) {
+	c := qt.New(t)
+	s := setupStore(c)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := s.AddCredentialsGoogle(ctx, randomString(c), randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.AddCredentialsDeepL(ctx, randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetCredentialsGoogleAll(ctx)
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetCredentialsDeepLAll(ctx)
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetCredentialsGoogleByID(ctx, 1)
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetCredentialsDeepLByID(ctx, 1)
+	c.Assert(err, qt.IsNotNil)
+
+	err = s.RemoveCredentialsGoogle(ctx, 1)
+	c.Assert(err, qt.IsNotNil)
+
+	err = s.RemoveCredentialsDeepL(ctx, 1)
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.CreateSessionGoogle(ctx, randomString(c), randomString(c), randomString(c), int64(1), uint(1), randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetUserSessionsGoogle(ctx, randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	err = s.RemoveSessionGoogle(ctx, randomString(c), uint(1))
+	c.Assert(err, qt.IsNotNil)
+
+	err = s.SaveSessionState(ctx, uint(1), randomString(c), randomString(c), randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	_, err = s.GetSessionState(ctx, randomString(c))
+	c.Assert(err, qt.IsNotNil)
+
+	err = s.Transaction(ctx, func(ctx context.Context, store store.Store) error {
+		return nil
+	})
+	c.Assert(err, qt.IsNotNil)
 }
