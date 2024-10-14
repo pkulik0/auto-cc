@@ -166,6 +166,12 @@ func (s *gormStore) RemoveCredentialsGoogle(ctx context.Context, id uint) error 
 	if result.Error != nil {
 		return result.Error
 	}
+
+	result = s.db.WithContext(ctx).Where("credentials_id = ?", id).Delete(&model.SessionGoogle{})
+	if result.Error != nil {
+		return result.Error
+	}
+
 	return nil
 }
 
