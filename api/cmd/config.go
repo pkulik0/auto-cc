@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -82,31 +81,26 @@ func parseConfig() (*config, error) {
 	viper.SetDefault(envProd, false)
 	viper.SetDefault(envPort, 8080)
 
+	viper.SetDefault(envPostgresHost, "postgres")
 	viper.SetDefault(envPostgresPort, 5432)
 	viper.SetDefault(envPostgresUser, "autocc")
 	viper.SetDefault(envPostgresDB, "autocc")
 
 	if os.Getenv(envPrefix+"_"+envProd) == "" {
-		viper.SetDefault(envPostgresHost, "localhost")
 		viper.SetDefault(envPostgresPass, "autocc")
 		viper.SetDefault(envKeycloakURL, "http://localhost:8081")
 		viper.SetDefault(envKeycloakRealm, "autocc")
 		viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
 	} else {
-		// TODO: change default values
-		viper.SetDefault(envPostgresHost, "localhost")
-		viper.SetDefault(envPostgresPass, "autocc")
 		viper.SetDefault(envKeycloakURL, "https://sso.ony.sh")
 		viper.SetDefault(envKeycloakRealm, "onysh")
-		viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
+		viper.SetDefault(envGoogleCallbackURL, "https://autocc.pkulik.com/sessions/google/callback")
 	}
 
 	err = viper.ReadInConfig()
 	switch err.(type) {
 	case nil:
-		log.Debug().Msg("Using config file")
 	case viper.ConfigFileNotFoundError:
-		log.Debug().Msg("Config file not found")
 	default:
 		return nil, err
 	}

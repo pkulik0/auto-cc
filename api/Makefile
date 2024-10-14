@@ -7,7 +7,7 @@ version:
 	@echo $(VERSION) > ./internal/version/version.txt
 
 run: version
-	@go run $(FLAGS) ./cmd
+	@AUTOCC_POSTGRES_HOST=localhost go run $(FLAGS) ./cmd
 
 build:
 	@mkdir -p ./build
