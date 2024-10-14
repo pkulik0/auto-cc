@@ -1,7 +1,12 @@
 .vscode
 .idea
+
+.DS_Store
+Thumbs.db
+
 node_modules
 build
-.env
-version.txt
+
 *.out
+
+version.txt
