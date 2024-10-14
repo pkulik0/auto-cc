@@ -122,7 +122,7 @@ func UserFromContext(ctx context.Context) (userId string, isSuperuser bool, ok b
 	return userId, isSuperuser, true
 }
 
-func contextWithUser(ctx context.Context, userId string, isSuperuser bool) context.Context {
+func ContextWithUser(ctx context.Context, userId string, isSuperuser bool) context.Context {
 	ctx = context.WithValue(ctx, userIdContextKey{}, userId)
 	ctx = context.WithValue(ctx, userSuperuserKey{}, isSuperuser)
 	return ctx
@@ -180,6 +180,6 @@ func (a *keycloakAuth) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		log.Info().Str("user_id", userId).Bool("is_superuser", isSuperuser).Msg("authenticated")
-		next.ServeHTTP(w, r.WithContext(contextWithUser(r.Context(), userId, isSuperuser)))
+		next.ServeHTTP(w, r.WithContext(ContextWithUser(r.Context(), userId, isSuperuser)))
 	})
 }
