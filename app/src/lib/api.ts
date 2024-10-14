@@ -1,6 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
-import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/autocc"
+import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
+import { GetYoutubeVideosResponse } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -151,4 +152,22 @@ export const removeSessionGoogle = async (id: number): Promise<void> => {
     if (!res.ok) {
         throw new Error("Failed to remove session")
     }
+}
+
+export const getVideos = async (nextPageToken?: string): Promise<GetYoutubeVideosResponse> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/videos?next_page_token=${nextPageToken || ""}`), {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to get videos")
+    }
+
+    const data = await res.arrayBuffer()
+    return GetYoutubeVideosResponse.decode(new Uint8Array(data))
 }

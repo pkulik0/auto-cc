@@ -1,13 +1,16 @@
 package main
 
 import (
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
 type config struct {
-	Port uint16 `mapstructure:"port"`
+	IsProduction bool   `mapstructure:"production"`
+	Port         uint16 `mapstructure:"port"`
 
 	PostgresHost string `mapstructure:"postgres_host"`
 	PostgresPort uint16 `mapstructure:"postgres_port"`
@@ -26,6 +29,7 @@ type config struct {
 const (
 	envPrefix = "AUTOCC"
 
+	envProd = "PROD"
 	envPort = "PORT"
 
 	envPostgresHost = "POSTGRES_HOST"
@@ -66,7 +70,7 @@ func parseConfig() (*config, error) {
 	viper.AddConfigPath(".")
 
 	err = bindEnvs(
-		envPort,
+		envPort, envPort,
 		envPostgresHost, envPostgresPort, envPostgresUser, envPostgresPass, envPostgresDB,
 		envKeycloakURL, envKeycloakRealm, envKeycloakClientId, envKeycloakClientSecret,
 		envGoogleCallbackURL,
@@ -75,15 +79,27 @@ func parseConfig() (*config, error) {
 		return nil, err
 	}
 
+	viper.SetDefault(envProd, false)
 	viper.SetDefault(envPort, 8080)
-	viper.SetDefault(envPostgresHost, "localhost")
+
 	viper.SetDefault(envPostgresPort, 5432)
 	viper.SetDefault(envPostgresUser, "autocc")
-	viper.SetDefault(envPostgresPass, "autocc")
 	viper.SetDefault(envPostgresDB, "autocc")
-	viper.SetDefault(envKeycloakURL, "https://sso.ony.sh")
-	viper.SetDefault(envKeycloakRealm, "onysh")
-	viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
+
+	if os.Getenv(envPrefix+"_"+envProd) == "" {
+		viper.SetDefault(envPostgresHost, "localhost")
+		viper.SetDefault(envPostgresPass, "autocc")
+		viper.SetDefault(envKeycloakURL, "http://localhost:8081")
+		viper.SetDefault(envKeycloakRealm, "autocc")
+		viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
+	} else {
+		// TODO: change default values
+		viper.SetDefault(envPostgresHost, "localhost")
+		viper.SetDefault(envPostgresPass, "autocc")
+		viper.SetDefault(envKeycloakURL, "https://sso.ony.sh")
+		viper.SetDefault(envKeycloakRealm, "onysh")
+		viper.SetDefault(envGoogleCallbackURL, "http://localhost:8080/sessions/google/callback")
+	}
 
 	err = viper.ReadInConfig()
 	switch err.(type) {

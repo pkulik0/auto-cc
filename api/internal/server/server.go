@@ -13,17 +13,22 @@ import (
 	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/service"
 	"github.com/pkulik0/autocc/api/internal/version"
+	"github.com/pkulik0/autocc/api/internal/youtube"
 )
+
+type GetYoutubeServiceFunc func(string) youtube.Youtube
 
 type server struct {
 	service service.Service
 	auth    auth.Auth
+	youtube youtube.Youtube
 }
 
-func New(service service.Service, auth auth.Auth) *server {
+func New(service service.Service, auth auth.Auth, youtube youtube.Youtube) *server {
 	return &server{
 		service: service,
 		auth:    auth,
+		youtube: youtube,
 	}
 }
 
@@ -253,6 +258,27 @@ func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *server) handlerYouTubeVideos(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	nextPageToken := r.URL.Query().Get("next_page_token")
+	videos, nextPageToken, err := s.youtube.GetVideos(r.Context(), userID, nextPageToken)
+	if err != nil {
+		errLog(w, err, "failed to get videos", http.StatusInternalServerError)
+		return
+	}
+
+	var resp pb.GetYoutubeVideosResponse
+	resp.Videos = videos
+	resp.NextPageToken = nextPageToken
+
+	writePb(w, &resp)
+}
+
 func superuserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, isSuperuser, ok := auth.UserFromContext(r.Context())
@@ -281,6 +307,7 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google", s.handlerUserSessionsGoogle)
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
+	authMux.HandleFunc("GET /youtube/videos", s.handlerYouTubeVideos)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+message Video {
+    string id = 1;
+    string title = 2;
+    string thumbnail_url = 3;
+    string description = 4;
+    google.protobuf.Timestamp published_at = 5;
+}
+
+message GetYoutubeVideosResponse {
+    string next_page_token = 1;
+    repeated Video videos = 2;
+}

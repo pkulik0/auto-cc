@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -13,22 +14,29 @@ import (
 	"github.com/pkulik0/autocc/api/internal/service"
 	"github.com/pkulik0/autocc/api/internal/store"
 	"github.com/pkulik0/autocc/api/internal/version"
+	"github.com/pkulik0/autocc/api/internal/youtube"
 )
-
-func init() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.DurationFieldUnit = time.Second
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-}
 
 func main() {
 	version.EnsureSet()
-	log.Info().Str("version", version.Version).Str("build_time", version.BuildTime).Msg("AutoCC API")
 
 	c, err := parseConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse config")
 	}
+
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.DurationFieldUnit = time.Second
+	if c.IsProduction {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		log.Info().Msg("running in production mode")
+	} else {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+		log.Info().Msg("running in development mode")
+	}
+
+	log.Info().Str("version", version.Version).Str("build_time", version.BuildTime).Msg("AutoCC API")
 
 	store, err := store.New(c.PostgresHost, c.PostgresPort, c.PostgresUser, c.PostgresPass, c.PostgresDB)
 	if err != nil {
@@ -42,7 +50,8 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create auth")
 	}
 
-	server := server.New(service, auth)
+	youtube := youtube.New(store)
+	server := server.New(service, auth, youtube)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")
