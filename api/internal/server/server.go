@@ -258,7 +258,7 @@ func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *server) handlerYouTubeVideos(w http.ResponseWriter, r *http.Request) {
+func (s *server) handlerYoutubeVideos(w http.ResponseWriter, r *http.Request) {
 	userID, _, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
@@ -267,7 +267,12 @@ func (s *server) handlerYouTubeVideos(w http.ResponseWriter, r *http.Request) {
 
 	nextPageToken := r.URL.Query().Get("next_page_token")
 	videos, nextPageToken, err := s.youtube.GetVideos(r.Context(), userID, nextPageToken)
-	if err != nil {
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
 		errLog(w, err, "failed to get videos", http.StatusInternalServerError)
 		return
 	}
@@ -275,6 +280,34 @@ func (s *server) handlerYouTubeVideos(w http.ResponseWriter, r *http.Request) {
 	var resp pb.GetYoutubeVideosResponse
 	resp.Videos = videos
 	resp.NextPageToken = nextPageToken
+
+	writePb(w, &resp)
+}
+
+func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	metadata, err := s.youtube.GetMetadata(r.Context(), userID, id)
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	case youtube.ErrNotFound:
+		errLog(w, err, "video not found", http.StatusNotFound)
+		return
+	default:
+		errLog(w, err, "failed to get video metadata", http.StatusInternalServerError)
+	}
+
+	var resp pb.GetMetadataResponse
+	resp.Metadata = metadata
 
 	writePb(w, &resp)
 }
@@ -307,7 +340,8 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google", s.handlerUserSessionsGoogle)
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
-	authMux.HandleFunc("GET /youtube/videos", s.handlerYouTubeVideos)
+	authMux.HandleFunc("GET /youtube/videos", s.handlerYoutubeVideos)
+	authMux.HandleFunc("GET /youtube/videos/{id}", s.handlerYoutubeMetadata)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

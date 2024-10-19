@@ -2,6 +2,7 @@ package youtube
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -16,9 +17,13 @@ import (
 )
 
 // Youtube is an interface for the YouTube service.
+//
+//go:generate mockgen -destination=../mocks/youtube.go -package=mocks . Youtube
 type Youtube interface {
 	// GetVideos returns a list of videos uploaded by the authenticated user.
 	GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error)
+	// GetMetadata returns metadata for a video.
+	GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error)
 }
 
 var _ Youtube = &youtube{}
@@ -34,7 +39,8 @@ func New(store store.Store) *youtube {
 	}
 }
 
-func (y *youtube) getService(ctx context.Context, userID string, neededQuota uint) (service *yt.Service, err error) {
+// getInstance returns an authenticated Youtube service with enough quota to make the request.
+func (y *youtube) getInstance(ctx context.Context, userID string, neededQuota uint) (service *yt.Service, err error) {
 	session, revert, err := y.store.GetSessionGoogleByAvailableCost(ctx, userID, neededQuota)
 	if err != nil {
 		return nil, err
@@ -80,7 +86,11 @@ const (
 )
 
 func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error) {
-	service, err := y.getService(ctx, userID, quota.YoutubeSearch)
+	if userID == "" {
+		return nil, "", ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeSearchList)
 	if err != nil {
 		return nil, "", err
 	}
@@ -116,4 +126,35 @@ func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) (
 	}
 
 	return videos, resp.NextPageToken, nil
+}
+
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrInvalidInput = errors.New("invalid input")
+)
+
+func (y *youtube) GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error) {
+	if userID == "" || videoID == "" {
+		return nil, ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeVideosList)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := service.Videos.List([]string{"snippet"}).Id(videoID).Do()
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Items) == 0 {
+		return nil, ErrNotFound
+	}
+
+	metadata := resp.Items[0].Snippet
+	return &pb.Metadata{
+		Title:       metadata.Title,
+		Description: metadata.Description,
+		Language:    metadata.DefaultLanguage,
+	}, nil
 }

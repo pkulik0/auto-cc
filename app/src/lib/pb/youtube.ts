@@ -23,6 +23,16 @@ export interface GetYoutubeVideosResponse {
   videos: Video[];
 }
 
+export interface Metadata {
+  title: string;
+  description: string;
+  language: string;
+}
+
+export interface GetMetadataResponse {
+  metadata: Metadata | undefined;
+}
+
 function createBaseVideo(): Video {
   return { id: "", title: "", thumbnailUrl: "", description: "", publishedAt: undefined };
 }
@@ -212,6 +222,154 @@ export const GetYoutubeVideosResponse: MessageFns<GetYoutubeVideosResponse> = {
     const message = createBaseGetYoutubeVideosResponse();
     message.nextPageToken = object.nextPageToken ?? "";
     message.videos = object.videos?.map((e) => Video.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseMetadata(): Metadata {
+  return { title: "", description: "", language: "" };
+}
+
+export const Metadata: MessageFns<Metadata> = {
+  encode(message: Metadata, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.language !== "") {
+      writer.uint32(26).string(message.language);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Metadata {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMetadata();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.language = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Metadata {
+    return {
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      language: isSet(object.language) ? globalThis.String(object.language) : "",
+    };
+  },
+
+  toJSON(message: Metadata): unknown {
+    const obj: any = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.language !== "") {
+      obj.language = message.language;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Metadata>, I>>(base?: I): Metadata {
+    return Metadata.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Metadata>, I>>(object: I): Metadata {
+    const message = createBaseMetadata();
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.language = object.language ?? "";
+    return message;
+  },
+};
+
+function createBaseGetMetadataResponse(): GetMetadataResponse {
+  return { metadata: undefined };
+}
+
+export const GetMetadataResponse: MessageFns<GetMetadataResponse> = {
+  encode(message: GetMetadataResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.metadata !== undefined) {
+      Metadata.encode(message.metadata, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMetadataResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMetadataResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.metadata = Metadata.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMetadataResponse {
+    return { metadata: isSet(object.metadata) ? Metadata.fromJSON(object.metadata) : undefined };
+  },
+
+  toJSON(message: GetMetadataResponse): unknown {
+    const obj: any = {};
+    if (message.metadata !== undefined) {
+      obj.metadata = Metadata.toJSON(message.metadata);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetMetadataResponse>, I>>(base?: I): GetMetadataResponse {
+    return GetMetadataResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetMetadataResponse>, I>>(object: I): GetMetadataResponse {
+    const message = createBaseGetMetadataResponse();
+    message.metadata = (object.metadata !== undefined && object.metadata !== null)
+      ? Metadata.fromPartial(object.metadata)
+      : undefined;
     return message;
   },
 };

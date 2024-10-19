@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
 import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
-import { GetYoutubeVideosResponse } from "./pb/youtube"
+import { GetMetadataResponse, GetYoutubeVideosResponse } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -170,4 +170,22 @@ export const getVideos = async (nextPageToken?: string): Promise<GetYoutubeVideo
 
     const data = await res.arrayBuffer()
     return GetYoutubeVideosResponse.decode(new Uint8Array(data))
+}
+
+export const getMetadata = async (videoId: string): Promise<GetMetadataResponse> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}`), {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to get metadata")
+    }
+
+    const data = await res.arrayBuffer()
+    return GetMetadataResponse.decode(new Uint8Array(data))
 }

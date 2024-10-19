@@ -16,3 +16,13 @@ message GetYoutubeVideosResponse {
     string next_page_token = 1;
     repeated Video videos = 2;
 }
+
+message Metadata {
+    string title = 1;
+    string description = 2;
+    string language = 3;
+}
+
+message GetMetadataResponse {
+    Metadata metadata = 1;
+}
