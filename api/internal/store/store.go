@@ -17,7 +17,7 @@ type Store interface {
 	// AddCredentialsGoogle adds Google client credentials to the store.
 	AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error)
 	// AddCredentialsDeepL adds DeepL client credentials to the store.
-	AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error)
+	AddCredentialsDeepL(ctx context.Context, key string, usage uint) (*model.CredentialsDeepL, error)
 
 	// GetCredentialsGoogleAll returns all Google client credentials.
 	GetCredentialsGoogleAll(ctx context.Context) ([]model.CredentialsGoogle, error)

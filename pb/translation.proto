@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pb;
+
+message GetLanguagesResponse {
+    repeated string languages = 1;
+}
+
+message TranslateRequest {
+    repeated string text = 1;
+    string source_language = 2;
+    string target_language = 3;
+}
+
+message TranslateResponse {
+    repeated string text = 1;
+}

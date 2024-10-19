@@ -66,7 +66,7 @@ func TestCredentialsDeepL(t *testing.T) {
 
 	key := randomString(c)
 
-	credentials, err := s.AddCredentialsDeepL(context.Background(), key)
+	credentials, err := s.AddCredentialsDeepL(context.Background(), key, 5)
 	c.Assert(err, qt.IsNil)
 	c.Assert(credentials.Key, qt.Equals, key)
 
@@ -246,7 +246,7 @@ func TestTransaction(t *testing.T) {
 		}
 
 		key := randomString(c)
-		deepl, err = store.AddCredentialsDeepL(ctx, key)
+		deepl, err = store.AddCredentialsDeepL(ctx, key, 10)
 		return err
 	})
 	c.Assert(err, qt.IsNil)
@@ -271,7 +271,7 @@ func TestTransaction(t *testing.T) {
 		cancel()
 
 		key := randomString(c)
-		deepl, err = store.AddCredentialsDeepL(ctx, key)
+		deepl, err = store.AddCredentialsDeepL(ctx, key, 20)
 		return err
 	})
 	c.Assert(err, qt.IsNotNil)
@@ -295,7 +295,7 @@ func TestContext(t *testing.T) {
 	_, err := s.AddCredentialsGoogle(ctx, randomString(c), randomString(c))
 	c.Assert(err, qt.IsNotNil)
 
-	_, err = s.AddCredentialsDeepL(ctx, randomString(c))
+	_, err = s.AddCredentialsDeepL(ctx, randomString(c), 0)
 	c.Assert(err, qt.IsNotNil)
 
 	_, err = s.GetCredentialsGoogleAll(ctx)

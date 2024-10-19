@@ -2,28 +2,26 @@ package translation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
-// Language represents a natural language.
-type Language string
-
-func (l Language) String() string {
-	return string(l)
-}
-
 // Translator is the interface that wraps translation methods.
 //
 //go:generate mockgen -destination=../mock/translation.go -package=mock . Translator
 type Translator interface {
 	// GetTargetLanguages returns a list of supported languages.
-	GetLanguages(ctx context.Context) ([]Language, error)
+	GetLanguages(ctx context.Context) ([]string, error)
 	// Translate translates the text from the source language to the target language.
-	Translate(ctx context.Context, text []string, source, target Language) ([]string, error)
+	Translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error)
+	// GetUsageDeepL returns the usage of the DeepL API.
+	GetUsageDeepL(ctx context.Context, apiKey string) (uint, error)
 }
 
 type translator struct {
@@ -40,13 +38,19 @@ func New(store store.Store) *translator {
 	}
 }
 
-func (d *translator) GetLanguages(ctx context.Context) ([]Language, error) {
-	apiClient, err := newDeeplApiClient(ctx, d.store, 0)
+func (t *translator) GetLanguages(ctx context.Context) ([]string, error) {
+	apiClient, err := newDeeplApiClient(ctx, t.store, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	return apiClient.getLanguages(ctx)
+	languages, err := apiClient.getLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug().Int("count", len(languages)).Strs("languages", languages).Msg("fetched languages")
+	return languages, nil
 }
 
 func countTextLen(text []string) uint {
@@ -61,17 +65,55 @@ var (
 	ErrInvalidInput = errors.New("invalid input")
 )
 
-func (d *translator) Translate(ctx context.Context, text []string, source, target Language) ([]string, error) {
-	if len(text) == 0 || source == "" || target == "" {
+func (t *translator) Translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
+	if len(text) == 0 || sourceLanguage == "" || targetLanguage == "" {
 		return nil, ErrInvalidInput
 	}
 
 	cost := countTextLen(text)
 
-	apiClient, err := newDeeplApiClient(ctx, d.store, cost)
+	apiClient, err := newDeeplApiClient(ctx, t.store, cost)
 	if err != nil {
 		return nil, err
 	}
 
-	return apiClient.translate(ctx, text, source, target)
+	translatedText, err := apiClient.translate(ctx, text, sourceLanguage, targetLanguage)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug().Strs("text", text).Strs("translated_text", translatedText).Msg("translated text")
+	return translatedText, nil
+}
+
+func (t *translator) GetUsageDeepL(ctx context.Context, apiKey string) (uint, error) {
+	client := &http.Client{
+		Transport: newDeeplTransport(http.DefaultTransport, apiKey),
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"usage", nil)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var data struct {
+		CharacterCount uint `json:"character_count"`
+		CharacterLimit uint `json:"character_limit"`
+	}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return 0, err
+	}
+
+	return data.CharacterCount, nil
 }

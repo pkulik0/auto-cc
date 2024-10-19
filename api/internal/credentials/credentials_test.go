@@ -22,12 +22,12 @@ func TestService(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		setupMock func(mockStore *mock.MockStore, mockOAuth *mock.MockOAuth2Config)
+		setupMock func(mockStore *mock.MockStore, mockOAuth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator)
 		test      func(c *qt.C, s credentials.Credentials)
 	}{
 		{
 			name: "AddCredentialsGoogle",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				call := store.EXPECT().AddCredentialsGoogle(gomock.Any(), "clientID", "clientSecret").Return(&model.CredentialsGoogle{
 					ClientID:     "clientID",
 					ClientSecret: "clientSecret",
@@ -49,12 +49,14 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "AddCredentialsDeepL",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
-				call := store.EXPECT().AddCredentialsDeepL(gomock.Any(), "key").Return(&model.CredentialsDeepL{
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
+				mockTranslation.EXPECT().GetUsageDeepL(gomock.Any(), "key").Return(uint(10), nil).Times(1)
+				store.EXPECT().AddCredentialsDeepL(gomock.Any(), "key", uint(10)).Return(&model.CredentialsDeepL{
 					Key: "key",
 				}, nil).Times(1)
 
-				store.EXPECT().AddCredentialsDeepL(gomock.Any(), "key").Return(nil, retErr).Times(1).After(call)
+				mockTranslation.EXPECT().GetUsageDeepL(gomock.Any(), "key").Return(uint(0), nil).Times(1)
+				store.EXPECT().AddCredentialsDeepL(gomock.Any(), "key", uint(0)).Return(nil, retErr).Times(1)
 			},
 			test: func(c *qt.C, s credentials.Credentials) {
 				cred, err := s.AddCredentialsDeepL(context.Background(), "key")
@@ -70,7 +72,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "GetCredentials",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				store.EXPECT().GetCredentialsGoogleAll(gomock.Any()).Return([]model.CredentialsGoogle{{ClientID: "clientID", ClientSecret: "clientSecret"}}, nil).Times(1)
 				store.EXPECT().GetCredentialsDeepLAll(gomock.Any()).Return([]model.CredentialsDeepL{{Key: "key1"}}, nil).Times(1)
 
@@ -94,7 +96,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "RemoveCredentialsGoogle",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				store.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(retErr).Times(1)
 			},
@@ -108,7 +110,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "RemoveCredentialsDeepL",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				store.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(retErr).Times(1)
 			},
@@ -122,7 +124,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "GetSessionGoogleURL",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				oauth.EXPECT().AuthCodeURL(gomock.Any(), oauth2.AccessTypeOffline).Return("url").Times(1)
 				store.EXPECT().GetCredentialsGoogleByID(gomock.Any(), uint(1)).Return(&model.CredentialsGoogle{ClientID: "clientID"}, nil).Times(1)
 				store.EXPECT().SaveSessionState(gomock.Any(), uint(1), "userID", gomock.Any(), gomock.Any(), "http://example.com").Return(nil).Times(1)
@@ -151,7 +153,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "CreateSessionGoogle",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				sessState := &model.SessionState{
 					CredentialsID: 1,
 					UserID:        "userID",
@@ -215,7 +217,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "RemoveSessionGoogle",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				store.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(nil).Times(1)
 				store.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(retErr).Times(1)
 			},
@@ -232,7 +234,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			name: "GetSessionsGoogleByUser",
-			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config) {
+			setupMock: func(store *mock.MockStore, oauth *mock.MockOAuth2Config, mockTranslation *mock.MockTranslator) {
 				store.EXPECT().GetSessionGoogleAll(gomock.Any(), "userID").Return([]model.SessionGoogle{{CredentialsID: 1}}, nil).Times(1)
 				store.EXPECT().GetSessionGoogleAll(gomock.Any(), "userID").Return(nil, retErr).Times(1)
 			},
@@ -253,13 +255,17 @@ func TestService(t *testing.T) {
 	for _, tc := range testCases {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
-			store := mock.NewMockStore(ctrl)
-			oauth := mock.NewMockConfigs(ctrl)
-			oauthGoogle := mock.NewMockOAuth2Config(ctrl)
-			oauth.EXPECT().GetGoogle(gomock.Any(), gomock.Any()).Return(oauthGoogle, "scopes").AnyTimes()
-			tc.setupMock(store, oauthGoogle)
 
-			s := credentials.New(store, oauth)
+			oauthGoogle := mock.NewMockOAuth2Config(ctrl)
+			oauth := mock.NewMockConfigs(ctrl)
+			oauth.EXPECT().GetGoogle(gomock.Any(), gomock.Any()).Return(oauthGoogle, "scopes").AnyTimes()
+
+			store := mock.NewMockStore(ctrl)
+			translation := mock.NewMockTranslator(ctrl)
+
+			tc.setupMock(store, oauthGoogle, translation)
+
+			s := credentials.New(store, oauth, translation)
 			tc.test(c, s)
 		})
 	}

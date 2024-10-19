@@ -4,10 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/pkulik0/autocc/api/internal/store"
+)
+
+const (
+	baseURL = "https://api-free.deepl.com/v2/"
 )
 
 type deeplTransport struct {
@@ -30,7 +37,6 @@ func (t *deeplTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 type deeplApiClient struct {
 	client     *http.Client
 	revertCost func() error
-	baseUrl    string
 }
 
 func newDeeplApiClient(ctx context.Context, store store.Store, neededQuota uint) (*deeplApiClient, error) {
@@ -44,72 +50,64 @@ func newDeeplApiClient(ctx context.Context, store store.Store, neededQuota uint)
 			Transport: newDeeplTransport(http.DefaultTransport, credentials.Key),
 		},
 		revertCost: revert,
-		baseUrl:    "https://api.deepl.com/v2/",
 	}, nil
 }
 
-type languagesResponse struct {
-	Data []struct {
-		Language          string `json:"language"`
-		Name              string `json:"name"`
-		SupportsFormality bool   `json:"supportsFormality"`
-	}
-}
-
-func (r *languagesResponse) toLanguages() []Language {
-	languages := make([]Language, 0, len(r.Data))
-	for _, l := range r.Data {
-		languages = append(languages, Language(l.Language))
-	}
-	return languages
-}
-
 func (c *deeplApiClient) request(ctx context.Context, method, path string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, c.baseUrl+path, body)
+	req, err := http.NewRequestWithContext(ctx, method, baseURL+path, body)
 	if err != nil {
 		return nil, err
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	return c.client.Do(req)
 }
 
-func (c *deeplApiClient) getLanguages(ctx context.Context) ([]Language, error) {
+func (c *deeplApiClient) getLanguages(ctx context.Context) ([]string, error) {
 	resp, err := c.request(ctx, http.MethodGet, "languages", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	defer resp.Body.Close()
-	var data languagesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug().Str("body", string(body)).Msg("fetched languages")
+
+	var data []struct {
+		Language string `json:"language"`
+		Name     string `json:"name"`
+	}
+	if err := json.Unmarshal(body, &data); err != nil {
 		return nil, err
 	}
 
-	return data.toLanguages(), nil
-}
-
-type translateRequest struct {
-	Text           []string `json:"text"`
-	SourceLanguage string   `json:"source_lang"`
-	TargetLanguage string   `json:"target_lang"`
-}
-
-type translateResponse struct {
-	Translations []struct {
-		DetectedSourceLanguage string `json:"detected_source_language"`
-		Text                   string `json:"text"`
+	languages := make([]string, len(data))
+	for i, l := range data {
+		languages[i] = l.Language
 	}
+
+	return languages, nil
 }
 
-func (c *deeplApiClient) translate(ctx context.Context, text []string, source, target Language) ([]string, error) {
-	data, err := json.Marshal(translateRequest{
+func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
+	data, err := json.Marshal(struct {
+		Text           []string `json:"text"`
+		SourceLanguage string   `json:"source_lang"`
+		TargetLanguage string   `json:"target_lang"`
+	}{
 		Text:           text,
-		SourceLanguage: source.String(),
-		TargetLanguage: target.String(),
+		SourceLanguage: sourceLanguage,
+		TargetLanguage: targetLanguage,
 	})
 	if err != nil {
 		return nil, err
 	}
+	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Str("data", string(data)).Msg("translating")
 
 	resp, err := c.request(ctx, http.MethodPost, "translate", bytes.NewBuffer(data))
 	if err != nil {
@@ -117,12 +115,28 @@ func (c *deeplApiClient) translate(ctx context.Context, text []string, source, t
 	}
 
 	defer resp.Body.Close()
-	var result translateResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
+	}
 
-	translations := make([]string, 0, len(result.Translations))
+	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Str("body", string(body)).Strs("text", text).Msg("translated")
+
+	var result struct {
+		Translations []struct {
+			DetectedSourceLanguage string `json:"detected_source_language"`
+			Text                   string `json:"text"`
+		} `json:"translations"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Interface("result", result).Msg("translated")
+
+	translations := make([]string, len(result.Translations))
 	for i, t := range result.Translations {
 		translations[i] = t.Text
 	}

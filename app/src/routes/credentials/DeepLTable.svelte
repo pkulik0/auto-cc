@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { removeCredentials } from '$lib/api';
 	import { isSuperuserStore } from '$lib/auth';
-	import type { CredentialsDeepL } from '$lib/pb/autocc';
+	import type { CredentialsDeepL } from '$lib/pb/credentials';
+	import { QuotaDeepL } from '$lib/quota';
 	import {
 		Table,
 		TableBody,
@@ -9,7 +10,8 @@
 		TableBodyRow,
 		TableHead,
 		TableHeadCell,
-		Button
+		Button,
+		Progressbar
 	} from 'flowbite-svelte';
 	import { TrashBinOutline } from 'flowbite-svelte-icons';
 	import { _ } from 'svelte-i18n';
@@ -18,7 +20,7 @@
 
 	const remove = async (id: number) => {
 		try {
-			await removeCredentials("deepl", id)
+			await removeCredentials('deepl', id);
 			credentials = credentials.filter((c) => c.id !== id);
 		} catch (error) {
 			console.error(error);
@@ -26,9 +28,7 @@
 	};
 </script>
 
-<h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">
-	DeepL
-</h2>
+<h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">DeepL</h2>
 
 <Table striped={true}>
 	<TableHead>
@@ -47,11 +47,13 @@
 		{#each credentials as credential}
 			<TableBodyRow>
 				<TableBodyCell class="w-1/2" colspan={2}>{credential.key}</TableBodyCell>
-				<TableBodyCell class="w-1/4">{credential.usage}</TableBodyCell>
+				<TableBodyCell>
+					<Progressbar class="w-60" progress={(credential.usage * 100) / QuotaDeepL} />
+				</TableBodyCell>
 				<TableBodyCell class="w-1/4">
 					{#if $isSuperuserStore}
 						<Button size="xs" outline color="red" on:click={() => remove(credential.id)}>
-							<TrashBinOutline class="w-4 h-4" />
+							<TrashBinOutline class="h-4 w-4" />
 						</Button>
 					{/if}
 				</TableBodyCell>

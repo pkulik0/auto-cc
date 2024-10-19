@@ -13,6 +13,7 @@ import (
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/store"
+	"github.com/pkulik0/autocc/api/internal/translation"
 )
 
 // Credentials is an interface for the credentials service.
@@ -45,16 +46,18 @@ type Credentials interface {
 var _ Credentials = &credentials{}
 
 type credentials struct {
-	store store.Store
-	oauth oauth.Configs
+	store       store.Store
+	oauth       oauth.Configs
+	translation translation.Translator
 }
 
 // New creates a new credentials service.
-func New(s store.Store, o oauth.Configs) *credentials {
+func New(s store.Store, o oauth.Configs, t translation.Translator) *credentials {
 	log.Debug().Msg("created credentials service")
 	return &credentials{
-		store: s,
-		oauth: o,
+		store:       s,
+		oauth:       o,
+		translation: t,
 	}
 }
 
@@ -75,7 +78,12 @@ func (c *credentials) AddCredentialsDeepL(ctx context.Context, key string) (*mod
 		return nil, ErrInvalidInput
 	}
 
-	return c.store.AddCredentialsDeepL(ctx, key)
+	usage, err := c.translation.GetUsageDeepL(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.store.AddCredentialsDeepL(ctx, key, usage)
 }
 
 func (c *credentials) GetCredentials(ctx context.Context) ([]model.CredentialsGoogle, []model.CredentialsDeepL, error) {

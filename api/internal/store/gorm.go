@@ -67,17 +67,18 @@ func (s *gormStore) AddCredentialsGoogle(ctx context.Context, clientID, clientSe
 	return client, nil
 }
 
-func (s *gormStore) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
-	client := &model.CredentialsDeepL{
-		Key: key,
+func (s *gormStore) AddCredentialsDeepL(ctx context.Context, key string, usage uint) (*model.CredentialsDeepL, error) {
+	credentials := &model.CredentialsDeepL{
+		Key:   key,
+		Usage: usage,
 	}
 
-	result := s.db.WithContext(ctx).Create(client)
+	result := s.db.WithContext(ctx).Create(credentials)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return client, nil
+	return credentials, nil
 }
 
 func (s *gormStore) GetCredentialsGoogleAll(ctx context.Context) ([]model.CredentialsGoogle, error) {

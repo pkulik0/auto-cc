@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CredentialsGoogle } from '$lib/pb/autocc';
+	import type { CredentialsGoogle } from '$lib/pb/credentials';
 	import {
 		Table,
 		TableBody,
@@ -20,8 +20,7 @@
 	} from '$lib/api';
 	import { isSuperuserStore } from '$lib/auth';
 	import { onMount } from 'svelte';
-
-	const quota = 10000; // Youtube API quota
+	import { QuotaGoogle } from '$lib/quota';
 
 	export let credentials: CredentialsGoogle[];
 	let sessions: number[] = [];
@@ -80,7 +79,7 @@
 				<TableBodyCell>{credential.clientId.substring(0, 30)}...</TableBodyCell>
 				<TableBodyCell>{credential.clientSecret}</TableBodyCell>
 				<TableBodyCell>
-					<Progressbar class="w-60" progress={credential.usage * 100 / quota} />
+					<Progressbar class="w-60" progress={(credential.usage * 100) / QuotaGoogle} />
 				</TableBodyCell>
 				<TableBodyCell class="flex items-center space-x-2">
 					{#if sessions.includes(credential.id)}

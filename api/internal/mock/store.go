@@ -44,18 +44,18 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // AddCredentialsDeepL mocks base method.
-func (m *MockStore) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
+func (m *MockStore) AddCredentialsDeepL(ctx context.Context, key string, usage uint) (*model.CredentialsDeepL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddCredentialsDeepL", ctx, key)
+	ret := m.ctrl.Call(m, "AddCredentialsDeepL", ctx, key, usage)
 	ret0, _ := ret[0].(*model.CredentialsDeepL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddCredentialsDeepL indicates an expected call of AddCredentialsDeepL.
-func (mr *MockStoreMockRecorder) AddCredentialsDeepL(ctx, key any) *gomock.Call {
+func (mr *MockStoreMockRecorder) AddCredentialsDeepL(ctx, key, usage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).AddCredentialsDeepL), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).AddCredentialsDeepL), ctx, key, usage)
 }
 
 // AddCredentialsGoogle mocks base method.

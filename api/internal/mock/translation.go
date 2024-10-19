@@ -13,7 +13,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	translation "github.com/pkulik0/autocc/api/internal/translation"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +41,10 @@ func (m *MockTranslator) EXPECT() *MockTranslatorMockRecorder {
 }
 
 // GetLanguages mocks base method.
-func (m *MockTranslator) GetLanguages(ctx context.Context) ([]translation.Language, error) {
+func (m *MockTranslator) GetLanguages(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLanguages", ctx)
-	ret0, _ := ret[0].([]translation.Language)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,17 +55,32 @@ func (mr *MockTranslatorMockRecorder) GetLanguages(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLanguages", reflect.TypeOf((*MockTranslator)(nil).GetLanguages), ctx)
 }
 
-// Translate mocks base method.
-func (m *MockTranslator) Translate(ctx context.Context, text []string, source, target translation.Language) ([]string, error) {
+// GetUsageDeepL mocks base method.
+func (m *MockTranslator) GetUsageDeepL(ctx context.Context, apiKey string) (uint, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Translate", ctx, text, source, target)
+	ret := m.ctrl.Call(m, "GetUsageDeepL", ctx, apiKey)
+	ret0, _ := ret[0].(uint)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsageDeepL indicates an expected call of GetUsageDeepL.
+func (mr *MockTranslatorMockRecorder) GetUsageDeepL(ctx, apiKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsageDeepL", reflect.TypeOf((*MockTranslator)(nil).GetUsageDeepL), ctx, apiKey)
+}
+
+// Translate mocks base method.
+func (m *MockTranslator) Translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Translate", ctx, text, sourceLanguage, targetLanguage)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Translate indicates an expected call of Translate.
-func (mr *MockTranslatorMockRecorder) Translate(ctx, text, source, target any) *gomock.Call {
+func (mr *MockTranslatorMockRecorder) Translate(ctx, text, sourceLanguage, targetLanguage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Translate", reflect.TypeOf((*MockTranslator)(nil).Translate), ctx, text, source, target)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Translate", reflect.TypeOf((*MockTranslator)(nil).Translate), ctx, text, sourceLanguage, targetLanguage)
 }

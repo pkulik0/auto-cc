@@ -427,6 +427,44 @@ func (s *server) handlerYoutubeDownloadCC(w http.ResponseWriter, r *http.Request
 	writePb(w, &resp)
 }
 
+func (s *server) handlerTranslatorLanguages(w http.ResponseWriter, r *http.Request) {
+	languages, err := s.translator.GetLanguages(r.Context())
+	if err != nil {
+		errLog(w, err, "failed to get languages", http.StatusInternalServerError)
+		return
+	}
+
+	var resp pb.GetLanguagesResponse
+	resp.Languages = languages
+
+	writePb(w, &resp)
+}
+
+func (s *server) handlerTranslatorTranslate(w http.ResponseWriter, r *http.Request) {
+	var req pb.TranslateRequest
+	err := readPb(r, &req)
+	if err != nil {
+		errLog(w, err, "failed to decode request", http.StatusBadRequest)
+		return
+	}
+
+	text, err := s.translator.Translate(r.Context(), req.Text, req.SourceLanguage, req.TargetLanguage)
+	switch err {
+	case nil:
+	case translation.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
+		errLog(w, err, "failed to translate text", http.StatusInternalServerError)
+		return
+	}
+
+	var resp pb.TranslateResponse
+	resp.Text = text
+
+	writePb(w, &resp)
+}
+
 func superuserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, isSuperuser, ok := auth.UserFromContext(r.Context())
@@ -464,11 +502,13 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
 	authMux.Handle("/youtube/", http.StripPrefix("/youtube", ytMux))
+	authMux.HandleFunc("POST /translation/translate", s.handlerTranslatorTranslate)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)
 	mux.Handle("/", s.auth.AuthMiddleware(authMux))
 	mux.HandleFunc("GET /sessions/google/callback", s.handlerSessionGoogleCallback)
+	mux.HandleFunc("GET /translation/languages", s.handlerTranslatorLanguages)
 
 	return mux
 }

@@ -49,13 +49,10 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create store")
 	}
 
-	oauth := oauth.New(c.GoogleCallbackURL)
-	credentials := credentials.New(store, oauth)
-
-	youtube := youtube.New(store)
 	translator := translation.New(store)
+	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
 
-	server := server.New(credentials, auth, youtube, translator)
+	server := server.New(credentials, auth, youtube.New(store), translator)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")
