@@ -5,5 +5,5 @@ const (
 )
 
 const (
-	YoutubeSearch = 1
+	YoutubeSearch = 100
 )
