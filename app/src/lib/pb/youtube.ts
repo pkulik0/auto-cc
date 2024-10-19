@@ -34,7 +34,6 @@ export interface GetMetadataResponse {
 }
 
 export interface UpdateMetadataRequest {
-  id: string;
   metadata: { [key: string]: Metadata };
 }
 
@@ -385,16 +384,13 @@ export const GetMetadataResponse: MessageFns<GetMetadataResponse> = {
 };
 
 function createBaseUpdateMetadataRequest(): UpdateMetadataRequest {
-  return { id: "", metadata: {} };
+  return { metadata: {} };
 }
 
 export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
   encode(message: UpdateMetadataRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
     Object.entries(message.metadata).forEach(([key, value]) => {
-      UpdateMetadataRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+      UpdateMetadataRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
     });
     return writer;
   },
@@ -411,16 +407,9 @@ export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
             break;
           }
 
-          message.id = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          const entry2 = UpdateMetadataRequest_MetadataEntry.decode(reader, reader.uint32());
-          if (entry2.value !== undefined) {
-            message.metadata[entry2.key] = entry2.value;
+          const entry1 = UpdateMetadataRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.metadata[entry1.key] = entry1.value;
           }
           continue;
       }
@@ -434,7 +423,6 @@ export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
 
   fromJSON(object: any): UpdateMetadataRequest {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
       metadata: isObject(object.metadata)
         ? Object.entries(object.metadata).reduce<{ [key: string]: Metadata }>((acc, [key, value]) => {
           acc[key] = Metadata.fromJSON(value);
@@ -446,9 +434,6 @@ export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
 
   toJSON(message: UpdateMetadataRequest): unknown {
     const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
     if (message.metadata) {
       const entries = Object.entries(message.metadata);
       if (entries.length > 0) {
@@ -466,7 +451,6 @@ export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<UpdateMetadataRequest>, I>>(object: I): UpdateMetadataRequest {
     const message = createBaseUpdateMetadataRequest();
-    message.id = object.id ?? "";
     message.metadata = Object.entries(object.metadata ?? {}).reduce<{ [key: string]: Metadata }>(
       (acc, [key, value]) => {
         if (value !== undefined) {

@@ -177,7 +177,7 @@ export const getMetadata = async (videoId: string): Promise<GetMetadataResponse>
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/metadata?id=${videoId}`), {
+    const res = await fetch(getApiUrl(`/youtube/metadata/${videoId}`), {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -195,13 +195,13 @@ export const updateMetadata = async (videoId: string, metadata: { [langCode: str
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/metadata`), {
+    const res = await fetch(getApiUrl(`/youtube/metadata/${videoId}`), {
         method: "PUT",
         headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/octet-stream"
         },
-        body: UpdateMetadataRequest.encode({ id: videoId, metadata: metadata }).finish()
+        body: UpdateMetadataRequest.encode({ metadata: metadata }).finish()
     });
     if (!res.ok) {
         throw new Error("Failed to update metadata")

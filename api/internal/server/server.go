@@ -291,7 +291,7 @@ func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id := r.URL.Query().Get("id")
+	id := r.PathValue("id")
 
 	metadata, err := s.youtube.GetMetadata(r.Context(), userID, id)
 	switch err {
@@ -319,6 +319,8 @@ func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	id := r.PathValue("id")
+
 	var req pb.UpdateMetadataRequest
 	err := readPb(r, &req)
 	if err != nil {
@@ -326,7 +328,7 @@ func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = s.youtube.UpdateMetadata(r.Context(), userID, req.Id, req.Metadata)
+	err = s.youtube.UpdateMetadata(r.Context(), userID, id, req.Metadata)
 	switch err {
 	case nil:
 	case youtube.ErrInvalidInput:
@@ -369,8 +371,8 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
 	authMux.HandleFunc("GET /youtube/videos", s.handlerYoutubeVideos)
-	authMux.HandleFunc("GET /youtube/metadata", s.handlerYoutubeMetadata)
-	authMux.HandleFunc("PUT /youtube/metadata", s.handlerYoutubeUpdateMetadata)
+	authMux.HandleFunc("GET /youtube/metadata/{id}", s.handlerYoutubeMetadata)
+	authMux.HandleFunc("PUT /youtube/metadata/{id}", s.handlerYoutubeUpdateMetadata)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)
