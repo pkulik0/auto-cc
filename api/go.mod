@@ -6,6 +6,7 @@ require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/frankban/quicktest v1.14.6
 	github.com/joho/godotenv v1.5.1
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
@@ -21,6 +22,8 @@ require (
 	cloud.google.com/go/auth v0.9.8 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
