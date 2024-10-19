@@ -367,6 +367,31 @@ func (s *server) handlerYoutubeCC(w http.ResponseWriter, r *http.Request) {
 	writePb(w, &resp)
 }
 
+func (s *server) handlerYoutubeDownloadCC(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	srt, err := s.youtube.DownloadClosedCaptions(r.Context(), userID, id)
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
+		errLog(w, err, "failed to download video cc", http.StatusInternalServerError)
+	}
+
+	var resp pb.DownloadClosedCaptionsResponse
+	resp.Srt = srt
+
+	writePb(w, &resp)
+}
+
 func superuserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, isSuperuser, ok := auth.UserFromContext(r.Context())
@@ -389,16 +414,20 @@ func (s *server) getMux() *http.ServeMux {
 	superuserMux.HandleFunc("DELETE /credentials/google/{id}", s.handlerRemoveCredentialsGoogle)
 	superuserMux.HandleFunc("DELETE /credentials/deepl/{id}", s.handlerRemoveCredentialsDeepL)
 
+	ytMux := http.NewServeMux()
+	ytMux.HandleFunc("GET /videos", s.handlerYoutubeVideos)
+	ytMux.HandleFunc("GET /videos/{id}/metadata", s.handlerYoutubeMetadata)
+	ytMux.HandleFunc("PUT /videos/{id}/metadata", s.handlerYoutubeUpdateMetadata)
+	ytMux.HandleFunc("GET /videos/{id}/cc", s.handlerYoutubeCC)
+	ytMux.HandleFunc("GET /cc/{id}", s.handlerYoutubeDownloadCC)
+
 	authMux := http.NewServeMux()
 	authMux.Handle("/", superuserMiddleware(superuserMux))
 	authMux.HandleFunc("GET /credentials", s.handlerCredentials)
 	authMux.HandleFunc("GET /sessions/google", s.handlerUserSessionsGoogle)
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
-	authMux.HandleFunc("GET /youtube/videos", s.handlerYoutubeVideos)
-	authMux.HandleFunc("GET /youtube/metadata/{id}", s.handlerYoutubeMetadata)
-	authMux.HandleFunc("PUT /youtube/metadata/{id}", s.handlerYoutubeUpdateMetadata)
-	authMux.HandleFunc("GET /youtube/cc/{id}", s.handlerYoutubeCC)
+	authMux.Handle("/youtube/", http.StripPrefix("/youtube", ytMux))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

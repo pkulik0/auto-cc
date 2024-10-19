@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
 import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
-import { ClosedCaptionsEntry, GetClosedCaptionsResponse, GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
+import { ClosedCaptionsEntry, DownloadClosedCaptionsResponse, GetClosedCaptionsResponse, GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -177,7 +177,7 @@ export const getMetadata = async (videoId: string): Promise<GetMetadataResponse>
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/metadata/${videoId}`), {
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/metadata`), {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -195,7 +195,7 @@ export const updateMetadata = async (videoId: string, metadata: { [langCode: str
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/metadata/${videoId}`), {
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/metadata`), {
         method: "PUT",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -213,7 +213,7 @@ export const getCC = async (videoId: string): Promise<ClosedCaptionsEntry[]> => 
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/cc/${videoId}`), {
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/cc`), {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -225,4 +225,23 @@ export const getCC = async (videoId: string): Promise<ClosedCaptionsEntry[]> => 
     const data = await res.arrayBuffer()
     const resp = GetClosedCaptionsResponse.decode(new Uint8Array(data))
     return resp.closedCaptions
+}
+
+export const downloadCC = async (ccId: string): Promise<string> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/cc/${ccId}`), {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    if (!res.ok) {
+        throw new Error("Failed to download CC")
+    }
+
+    const data = await res.arrayBuffer()
+    const resp = DownloadClosedCaptionsResponse.decode(new Uint8Array(data))
+    return resp.srt
 }

@@ -3,6 +3,7 @@ package youtube
 import (
 	"context"
 	"errors"
+	"io"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -30,6 +31,8 @@ type Youtube interface {
 
 	// GetClosedCaptions returns a list of closed captions for a video.
 	GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error)
+	// DownloadClosedCaptions downloads closed captions for a video.
+	DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error)
 }
 
 var _ Youtube = &youtube{}
@@ -89,6 +92,7 @@ func (y *youtube) getInstance(ctx context.Context, userID string, neededQuota ui
 
 const (
 	videosMaxResults = 50
+	captionsFormat   = "srt"
 )
 
 func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error) {
@@ -215,4 +219,27 @@ func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string)
 	}
 
 	return captions, nil
+}
+
+func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error) {
+	if userID == "" || ccID == "" {
+		return "", ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsDownload)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := service.Captions.Download(ccID).Tfmt(captionsFormat).Download()
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }

@@ -39,3 +39,7 @@ message ClosedCaptionsEntry {
 message GetClosedCaptionsResponse {
     repeated ClosedCaptionsEntry closed_captions = 1;
 }
+
+message DownloadClosedCaptionsResponse {
+    string srt = 1;
+}

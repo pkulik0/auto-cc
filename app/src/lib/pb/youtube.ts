@@ -51,6 +51,10 @@ export interface GetClosedCaptionsResponse {
   closedCaptions: ClosedCaptionsEntry[];
 }
 
+export interface DownloadClosedCaptionsResponse {
+  srt: string;
+}
+
 function createBaseVideo(): Video {
   return { id: "", title: "", thumbnailUrl: "", description: "", publishedAt: undefined };
 }
@@ -684,6 +688,65 @@ export const GetClosedCaptionsResponse: MessageFns<GetClosedCaptionsResponse> = 
   fromPartial<I extends Exact<DeepPartial<GetClosedCaptionsResponse>, I>>(object: I): GetClosedCaptionsResponse {
     const message = createBaseGetClosedCaptionsResponse();
     message.closedCaptions = object.closedCaptions?.map((e) => ClosedCaptionsEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseDownloadClosedCaptionsResponse(): DownloadClosedCaptionsResponse {
+  return { srt: "" };
+}
+
+export const DownloadClosedCaptionsResponse: MessageFns<DownloadClosedCaptionsResponse> = {
+  encode(message: DownloadClosedCaptionsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.srt !== "") {
+      writer.uint32(10).string(message.srt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DownloadClosedCaptionsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDownloadClosedCaptionsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.srt = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DownloadClosedCaptionsResponse {
+    return { srt: isSet(object.srt) ? globalThis.String(object.srt) : "" };
+  },
+
+  toJSON(message: DownloadClosedCaptionsResponse): unknown {
+    const obj: any = {};
+    if (message.srt !== "") {
+      obj.srt = message.srt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DownloadClosedCaptionsResponse>, I>>(base?: I): DownloadClosedCaptionsResponse {
+    return DownloadClosedCaptionsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DownloadClosedCaptionsResponse>, I>>(
+    object: I,
+  ): DownloadClosedCaptionsResponse {
+    const message = createBaseDownloadClosedCaptionsResponse();
+    message.srt = object.srt ?? "";
     return message;
   },
 };
