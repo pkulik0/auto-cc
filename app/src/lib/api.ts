@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
 import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
-import { GetMetadataResponse, GetYoutubeVideosResponse } from "./pb/youtube"
+import { GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -41,7 +41,7 @@ export const addCredentialsGoogle = async (clientId: string, clientSecret: strin
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/octet-stream"
         },
         body: AddCredentialsGoogleRequest.encode({
             clientId: clientId,
@@ -68,7 +68,7 @@ export const addCredentialsDeepL = async (key: string): Promise<CredentialsDeepL
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/octet-stream"
         },
         body: AddCredentialsDeepLRequest.encode({
             key: key,
@@ -177,10 +177,10 @@ export const getMetadata = async (videoId: string): Promise<GetMetadataResponse>
     if (!u) throw new Error("User not logged in")
     const token = u.access_token
 
-    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}`), {
+    const res = await fetch(getApiUrl(`/youtube/metadata?id=${videoId}`), {
         headers: {
-            Authorization: `Bearer ${token}`
-        }
+            Authorization: `Bearer ${token}`,
+        },
     });
     if (!res.ok) {
         throw new Error("Failed to get metadata")
@@ -188,4 +188,22 @@ export const getMetadata = async (videoId: string): Promise<GetMetadataResponse>
 
     const data = await res.arrayBuffer()
     return GetMetadataResponse.decode(new Uint8Array(data))
+}
+
+export const updateMetadata = async (videoId: string, metadata: { [langCode: string]: Metadata }): Promise<void> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/metadata`), {
+        method: "PUT",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/octet-stream"
+        },
+        body: UpdateMetadataRequest.encode({ id: videoId, metadata: metadata }).finish()
+    });
+    if (!res.ok) {
+        throw new Error("Failed to update metadata")
+    }
 }

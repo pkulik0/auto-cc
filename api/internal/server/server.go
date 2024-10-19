@@ -291,7 +291,7 @@ func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id := r.PathValue("id")
+	id := r.URL.Query().Get("id")
 
 	metadata, err := s.youtube.GetMetadata(r.Context(), userID, id)
 	switch err {
@@ -310,6 +310,34 @@ func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) 
 	resp.Metadata = metadata
 
 	writePb(w, &resp)
+}
+
+func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	var req pb.UpdateMetadataRequest
+	err := readPb(r, &req)
+	if err != nil {
+		errLog(w, err, "failed to decode request", http.StatusBadRequest)
+		return
+	}
+
+	err = s.youtube.UpdateMetadata(r.Context(), userID, req.Id, req.Metadata)
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
+		errLog(w, err, "failed to update video metadata", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func superuserMiddleware(next http.Handler) http.Handler {
@@ -341,7 +369,8 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
 	authMux.HandleFunc("GET /youtube/videos", s.handlerYoutubeVideos)
-	authMux.HandleFunc("GET /youtube/videos/{id}", s.handlerYoutubeMetadata)
+	authMux.HandleFunc("GET /youtube/metadata", s.handlerYoutubeMetadata)
+	authMux.HandleFunc("PUT /youtube/metadata", s.handlerYoutubeUpdateMetadata)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

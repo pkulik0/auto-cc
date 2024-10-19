@@ -33,6 +33,16 @@ export interface GetMetadataResponse {
   metadata: Metadata | undefined;
 }
 
+export interface UpdateMetadataRequest {
+  id: string;
+  metadata: { [key: string]: Metadata };
+}
+
+export interface UpdateMetadataRequest_MetadataEntry {
+  key: string;
+  value: Metadata | undefined;
+}
+
 function createBaseVideo(): Video {
   return { id: "", title: "", thumbnailUrl: "", description: "", publishedAt: undefined };
 }
@@ -374,6 +384,182 @@ export const GetMetadataResponse: MessageFns<GetMetadataResponse> = {
   },
 };
 
+function createBaseUpdateMetadataRequest(): UpdateMetadataRequest {
+  return { id: "", metadata: {} };
+}
+
+export const UpdateMetadataRequest: MessageFns<UpdateMetadataRequest> = {
+  encode(message: UpdateMetadataRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    Object.entries(message.metadata).forEach(([key, value]) => {
+      UpdateMetadataRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMetadataRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMetadataRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          const entry2 = UpdateMetadataRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.metadata[entry2.key] = entry2.value;
+          }
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMetadataRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      metadata: isObject(object.metadata)
+        ? Object.entries(object.metadata).reduce<{ [key: string]: Metadata }>((acc, [key, value]) => {
+          acc[key] = Metadata.fromJSON(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: UpdateMetadataRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.metadata) {
+      const entries = Object.entries(message.metadata);
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = Metadata.toJSON(v);
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateMetadataRequest>, I>>(base?: I): UpdateMetadataRequest {
+    return UpdateMetadataRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateMetadataRequest>, I>>(object: I): UpdateMetadataRequest {
+    const message = createBaseUpdateMetadataRequest();
+    message.id = object.id ?? "";
+    message.metadata = Object.entries(object.metadata ?? {}).reduce<{ [key: string]: Metadata }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Metadata.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseUpdateMetadataRequest_MetadataEntry(): UpdateMetadataRequest_MetadataEntry {
+  return { key: "", value: undefined };
+}
+
+export const UpdateMetadataRequest_MetadataEntry: MessageFns<UpdateMetadataRequest_MetadataEntry> = {
+  encode(message: UpdateMetadataRequest_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      Metadata.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateMetadataRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateMetadataRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = Metadata.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateMetadataRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? Metadata.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: UpdateMetadataRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = Metadata.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateMetadataRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): UpdateMetadataRequest_MetadataEntry {
+    return UpdateMetadataRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateMetadataRequest_MetadataEntry>, I>>(
+    object: I,
+  ): UpdateMetadataRequest_MetadataEntry {
+    const message = createBaseUpdateMetadataRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? Metadata.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin ? T
@@ -406,6 +592,10 @@ function fromJsonTimestamp(o: any): Date {
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));
   }
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {

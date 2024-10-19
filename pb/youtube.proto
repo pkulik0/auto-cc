@@ -26,3 +26,8 @@ message Metadata {
 message GetMetadataResponse {
     Metadata metadata = 1;
 }
+
+message UpdateMetadataRequest {
+    string id = 1;
+    map<string, Metadata> metadata = 2;
+}

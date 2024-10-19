@@ -24,6 +24,8 @@ type Youtube interface {
 	GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error)
 	// GetMetadata returns metadata for a video.
 	GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error)
+	// UpdateMetadata updates metadata for a video for each language.
+	UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error
 }
 
 var _ Youtube = &youtube{}
@@ -157,4 +159,30 @@ func (y *youtube) GetMetadata(ctx context.Context, userID, videoID string) (*pb.
 		Description: metadata.Description,
 		Language:    metadata.DefaultLanguage,
 	}, nil
+}
+
+func (y *youtube) UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error {
+	if userID == "" || videoID == "" || len(metadata) == 0 {
+		return ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeVideosUpdate)
+	if err != nil {
+		return err
+	}
+
+	localizations := make(map[string]yt.VideoLocalization)
+	for lang, meta := range metadata {
+		localizations[lang] = yt.VideoLocalization{
+			Title:       meta.Title,
+			Description: meta.Description,
+		}
+	}
+
+	_, err = service.Videos.Update([]string{"localizations"}, &yt.Video{
+		Id:            videoID,
+		Localizations: localizations,
+	}).Do()
+	// TODO: Handle not found
+	return err
 }

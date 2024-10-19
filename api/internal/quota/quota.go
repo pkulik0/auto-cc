@@ -5,6 +5,7 @@ const (
 )
 
 const (
-	YoutubeSearchList = 100
-	YoutubeVideosList = 1
+	YoutubeSearchList   = 100
+	YoutubeVideosList   = 1
+	YoutubeVideosUpdate = 50
 )
