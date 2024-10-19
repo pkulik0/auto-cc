@@ -179,7 +179,7 @@ func (a *keycloakAuth) AuthMiddleware(next http.Handler) http.Handler {
 			break
 		}
 
-		log.Info().Str("user_id", userId).Bool("is_superuser", isSuperuser).Msg("authenticated")
+		log.Debug().Str("user_id", userId).Bool("is_superuser", isSuperuser).Msg("authenticated")
 		next.ServeHTTP(w, r.WithContext(ContextWithUser(r.Context(), userId, isSuperuser)))
 	})
 }
