@@ -31,3 +31,11 @@ message UpdateMetadataRequest {
     map<string, Metadata> metadata = 1;
 }
 
+message ClosedCaptionsEntry {
+    string id = 1;
+    string language = 2;
+}
+
+message GetClosedCaptionsResponse {
+    repeated ClosedCaptionsEntry closed_captions = 1;
+}

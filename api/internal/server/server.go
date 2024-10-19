@@ -342,6 +342,31 @@ func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *server) handlerYoutubeCC(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	cc, err := s.youtube.GetClosedCaptions(r.Context(), userID, id)
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
+		errLog(w, err, "failed to get video cc", http.StatusInternalServerError)
+	}
+
+	var resp pb.GetClosedCaptionsResponse
+	resp.ClosedCaptions = cc
+
+	writePb(w, &resp)
+}
+
 func superuserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, isSuperuser, ok := auth.UserFromContext(r.Context())
@@ -373,6 +398,7 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /youtube/videos", s.handlerYoutubeVideos)
 	authMux.HandleFunc("GET /youtube/metadata/{id}", s.handlerYoutubeMetadata)
 	authMux.HandleFunc("PUT /youtube/metadata/{id}", s.handlerYoutubeUpdateMetadata)
+	authMux.HandleFunc("GET /youtube/cc/{id}", s.handlerYoutubeCC)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getMetadata, getVideos } from '$lib/api';
+	import { getCC, getMetadata, getVideos } from '$lib/api';
 	import { isSuperuserStore } from '$lib/auth';
 	import { onMount } from 'svelte';
 
@@ -8,8 +8,13 @@
 			const res = await getVideos();
 			console.log(res);
 
-			const res2 = await getMetadata(res.videos[0].id);
+			const id = res.videos[4].id;
+
+			const res2 = await getMetadata(id);
 			console.log(res2);
+
+			const res3 = await getCC(id);
+			console.log(res3);
 		} catch (error) {
 			console.error(error);
 		}

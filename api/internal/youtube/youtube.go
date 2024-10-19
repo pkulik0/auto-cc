@@ -22,10 +22,14 @@ import (
 type Youtube interface {
 	// GetVideos returns a list of videos uploaded by the authenticated user.
 	GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error)
+
 	// GetMetadata returns metadata for a video.
 	GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error)
 	// UpdateMetadata updates metadata for a video for each language.
 	UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error
+
+	// GetClosedCaptions returns a list of closed captions for a video.
+	GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error)
 }
 
 var _ Youtube = &youtube{}
@@ -185,4 +189,30 @@ func (y *youtube) UpdateMetadata(ctx context.Context, userID, videoID string, me
 	}).Do()
 	// TODO: Handle not found
 	return err
+}
+
+func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error) {
+	if userID == "" || videoID == "" {
+		return nil, ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsList)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := service.Captions.List([]string{"id", "snippet"}, videoID).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	var captions []*pb.ClosedCaptionsEntry
+	for _, item := range resp.Items {
+		captions = append(captions, &pb.ClosedCaptionsEntry{
+			Id:       item.Id,
+			Language: item.Snippet.Language,
+		})
+	}
+
+	return captions, nil
 }

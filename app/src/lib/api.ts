@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
 import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
-import { GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
+import { ClosedCaptionsEntry, GetClosedCaptionsResponse, GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -206,4 +206,23 @@ export const updateMetadata = async (videoId: string, metadata: { [langCode: str
     if (!res.ok) {
         throw new Error("Failed to update metadata")
     }
+}
+
+export const getCC = async (videoId: string): Promise<ClosedCaptionsEntry[]> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/cc/${videoId}`), {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    if (!res.ok) {
+        throw new Error("Failed to get CC")
+    }
+
+    const data = await res.arrayBuffer()
+    const resp = GetClosedCaptionsResponse.decode(new Uint8Array(data))
+    return resp.closedCaptions
 }

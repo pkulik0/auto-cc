@@ -42,6 +42,15 @@ export interface UpdateMetadataRequest_MetadataEntry {
   value: Metadata | undefined;
 }
 
+export interface ClosedCaptionsEntry {
+  id: string;
+  language: string;
+}
+
+export interface GetClosedCaptionsResponse {
+  closedCaptions: ClosedCaptionsEntry[];
+}
+
 function createBaseVideo(): Video {
   return { id: "", title: "", thumbnailUrl: "", description: "", publishedAt: undefined };
 }
@@ -540,6 +549,141 @@ export const UpdateMetadataRequest_MetadataEntry: MessageFns<UpdateMetadataReque
     message.value = (object.value !== undefined && object.value !== null)
       ? Metadata.fromPartial(object.value)
       : undefined;
+    return message;
+  },
+};
+
+function createBaseClosedCaptionsEntry(): ClosedCaptionsEntry {
+  return { id: "", language: "" };
+}
+
+export const ClosedCaptionsEntry: MessageFns<ClosedCaptionsEntry> = {
+  encode(message: ClosedCaptionsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.language !== "") {
+      writer.uint32(18).string(message.language);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ClosedCaptionsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseClosedCaptionsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.language = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ClosedCaptionsEntry {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      language: isSet(object.language) ? globalThis.String(object.language) : "",
+    };
+  },
+
+  toJSON(message: ClosedCaptionsEntry): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.language !== "") {
+      obj.language = message.language;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ClosedCaptionsEntry>, I>>(base?: I): ClosedCaptionsEntry {
+    return ClosedCaptionsEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ClosedCaptionsEntry>, I>>(object: I): ClosedCaptionsEntry {
+    const message = createBaseClosedCaptionsEntry();
+    message.id = object.id ?? "";
+    message.language = object.language ?? "";
+    return message;
+  },
+};
+
+function createBaseGetClosedCaptionsResponse(): GetClosedCaptionsResponse {
+  return { closedCaptions: [] };
+}
+
+export const GetClosedCaptionsResponse: MessageFns<GetClosedCaptionsResponse> = {
+  encode(message: GetClosedCaptionsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.closedCaptions) {
+      ClosedCaptionsEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetClosedCaptionsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetClosedCaptionsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.closedCaptions.push(ClosedCaptionsEntry.decode(reader, reader.uint32()));
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetClosedCaptionsResponse {
+    return {
+      closedCaptions: globalThis.Array.isArray(object?.closedCaptions)
+        ? object.closedCaptions.map((e: any) => ClosedCaptionsEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetClosedCaptionsResponse): unknown {
+    const obj: any = {};
+    if (message.closedCaptions?.length) {
+      obj.closedCaptions = message.closedCaptions.map((e) => ClosedCaptionsEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetClosedCaptionsResponse>, I>>(base?: I): GetClosedCaptionsResponse {
+    return GetClosedCaptionsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetClosedCaptionsResponse>, I>>(object: I): GetClosedCaptionsResponse {
+    const message = createBaseGetClosedCaptionsResponse();
+    message.closedCaptions = object.closedCaptions?.map((e) => ClosedCaptionsEntry.fromPartial(e)) || [];
     return message;
   },
 };
