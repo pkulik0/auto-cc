@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -367,6 +368,37 @@ func (s *server) handlerYoutubeCC(w http.ResponseWriter, r *http.Request) {
 	writePb(w, &resp)
 }
 
+func (s *server) handlerYoutubeUploadCC(w http.ResponseWriter, r *http.Request) {
+	userID, _, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		errLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
+		return
+	}
+
+	var req pb.UploadClosedCaptionsRequest
+	err := readPb(r, &req)
+	if err != nil {
+		errLog(w, err, "failed to decode request", http.StatusBadRequest)
+		return
+	}
+
+	ccID, err := s.youtube.UploadClosedCaptions(r.Context(), userID, req.VideoId, req.Language, strings.NewReader(req.Srt))
+	switch err {
+	case nil:
+	case youtube.ErrInvalidInput:
+		errLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	default:
+		errLog(w, err, "failed to upload video cc", http.StatusInternalServerError)
+		return
+	}
+
+	var resp pb.UploadClosedCaptionsResponse
+	resp.Id = ccID
+
+	writePb(w, &resp)
+}
+
 func (s *server) handlerYoutubeDownloadCC(w http.ResponseWriter, r *http.Request) {
 	userID, _, ok := auth.UserFromContext(r.Context())
 	if !ok {
@@ -419,6 +451,7 @@ func (s *server) getMux() *http.ServeMux {
 	ytMux.HandleFunc("GET /videos/{id}/metadata", s.handlerYoutubeMetadata)
 	ytMux.HandleFunc("PUT /videos/{id}/metadata", s.handlerYoutubeUpdateMetadata)
 	ytMux.HandleFunc("GET /videos/{id}/cc", s.handlerYoutubeCC)
+	ytMux.HandleFunc("POST /videos/{id}/cc", s.handlerYoutubeUploadCC)
 	ytMux.HandleFunc("GET /cc/{id}", s.handlerYoutubeDownloadCC)
 
 	authMux := http.NewServeMux()

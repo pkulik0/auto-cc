@@ -1,7 +1,7 @@
 import { PUBLIC_API_URL } from "$env/static/public"
 import { userManager } from "./auth"
 import { AddCredentialsDeepLRequest, AddCredentialsDeepLResponse, AddCredentialsGoogleRequest, AddCredentialsGoogleResponse, CredentialsDeepL, CredentialsGoogle, GetCredentialsResponse, GetSessionGoogleURLResponse, GetUserSessionsGoogleResponse } from "./pb/credentials"
-import { ClosedCaptionsEntry, DownloadClosedCaptionsResponse, GetClosedCaptionsResponse, GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest } from "./pb/youtube"
+import { ClosedCaptionsEntry, DownloadClosedCaptionsResponse, GetClosedCaptionsResponse, GetMetadataResponse, GetYoutubeVideosResponse, Metadata, UpdateMetadataRequest, UploadClosedCaptionsRequest, UploadClosedCaptionsResponse } from "./pb/youtube"
 
 const getApiUrl = (endpoint: string) => {
     if (!endpoint.startsWith("/")) endpoint = "/" + endpoint
@@ -244,4 +244,30 @@ export const downloadCC = async (ccId: string): Promise<string> => {
     const data = await res.arrayBuffer()
     const resp = DownloadClosedCaptionsResponse.decode(new Uint8Array(data))
     return resp.srt
+}
+
+export const uploadCC = async(videoId: string, langCode: string, srt: string): Promise<string> => {
+    const u = await userManager.getUser()
+    if (!u) throw new Error("User not logged in")
+    const token = u.access_token
+
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/cc`), {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/octet-stream"
+        },
+        body: UploadClosedCaptionsRequest.encode({
+            videoId: videoId,
+            language: langCode,
+            srt: srt
+        }).finish()
+    });
+    if (!res.ok) {
+        throw new Error("Failed to upload CC")
+    }
+
+    const data = await res.arrayBuffer()
+    const resp = UploadClosedCaptionsResponse.decode(new Uint8Array(data))
+    return resp.id
 }

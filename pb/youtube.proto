@@ -43,3 +43,13 @@ message GetClosedCaptionsResponse {
 message DownloadClosedCaptionsResponse {
     string srt = 1;
 }
+
+message UploadClosedCaptionsRequest {
+    string video_id = 1;
+    string language = 2;
+    string srt = 3;
+}
+
+message UploadClosedCaptionsResponse {
+    string id = 1;
+}

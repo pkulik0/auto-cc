@@ -10,4 +10,5 @@ const (
 	YoutubeVideosUpdate     = 50
 	YoutubeCaptionsList     = 50
 	YoutubeCaptionsDownload = 200
+	YoutubeCaptionsUpload   = 400
 )

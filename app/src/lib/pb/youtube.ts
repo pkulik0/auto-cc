@@ -55,6 +55,16 @@ export interface DownloadClosedCaptionsResponse {
   srt: string;
 }
 
+export interface UploadClosedCaptionsRequest {
+  videoId: string;
+  language: string;
+  srt: string;
+}
+
+export interface UploadClosedCaptionsResponse {
+  id: string;
+}
+
 function createBaseVideo(): Video {
   return { id: "", title: "", thumbnailUrl: "", description: "", publishedAt: undefined };
 }
@@ -747,6 +757,152 @@ export const DownloadClosedCaptionsResponse: MessageFns<DownloadClosedCaptionsRe
   ): DownloadClosedCaptionsResponse {
     const message = createBaseDownloadClosedCaptionsResponse();
     message.srt = object.srt ?? "";
+    return message;
+  },
+};
+
+function createBaseUploadClosedCaptionsRequest(): UploadClosedCaptionsRequest {
+  return { videoId: "", language: "", srt: "" };
+}
+
+export const UploadClosedCaptionsRequest: MessageFns<UploadClosedCaptionsRequest> = {
+  encode(message: UploadClosedCaptionsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.videoId !== "") {
+      writer.uint32(10).string(message.videoId);
+    }
+    if (message.language !== "") {
+      writer.uint32(18).string(message.language);
+    }
+    if (message.srt !== "") {
+      writer.uint32(26).string(message.srt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UploadClosedCaptionsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUploadClosedCaptionsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.videoId = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.language = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.srt = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UploadClosedCaptionsRequest {
+    return {
+      videoId: isSet(object.videoId) ? globalThis.String(object.videoId) : "",
+      language: isSet(object.language) ? globalThis.String(object.language) : "",
+      srt: isSet(object.srt) ? globalThis.String(object.srt) : "",
+    };
+  },
+
+  toJSON(message: UploadClosedCaptionsRequest): unknown {
+    const obj: any = {};
+    if (message.videoId !== "") {
+      obj.videoId = message.videoId;
+    }
+    if (message.language !== "") {
+      obj.language = message.language;
+    }
+    if (message.srt !== "") {
+      obj.srt = message.srt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UploadClosedCaptionsRequest>, I>>(base?: I): UploadClosedCaptionsRequest {
+    return UploadClosedCaptionsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UploadClosedCaptionsRequest>, I>>(object: I): UploadClosedCaptionsRequest {
+    const message = createBaseUploadClosedCaptionsRequest();
+    message.videoId = object.videoId ?? "";
+    message.language = object.language ?? "";
+    message.srt = object.srt ?? "";
+    return message;
+  },
+};
+
+function createBaseUploadClosedCaptionsResponse(): UploadClosedCaptionsResponse {
+  return { id: "" };
+}
+
+export const UploadClosedCaptionsResponse: MessageFns<UploadClosedCaptionsResponse> = {
+  encode(message: UploadClosedCaptionsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UploadClosedCaptionsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUploadClosedCaptionsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UploadClosedCaptionsResponse {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: UploadClosedCaptionsResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UploadClosedCaptionsResponse>, I>>(base?: I): UploadClosedCaptionsResponse {
+    return UploadClosedCaptionsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UploadClosedCaptionsResponse>, I>>(object: I): UploadClosedCaptionsResponse {
+    const message = createBaseUploadClosedCaptionsResponse();
+    message.id = object.id ?? "";
     return message;
   },
 };

@@ -445,6 +445,112 @@ func (x *DownloadClosedCaptionsResponse) GetSrt() string {
 	return ""
 }
 
+type UploadClosedCaptionsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	VideoId  string `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	Language string `protobuf:"bytes,2,opt,name=language,proto3" json:"language,omitempty"`
+	Srt      string `protobuf:"bytes,3,opt,name=srt,proto3" json:"srt,omitempty"`
+}
+
+func (x *UploadClosedCaptionsRequest) Reset() {
+	*x = UploadClosedCaptionsRequest{}
+	mi := &file_pb_youtube_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadClosedCaptionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadClosedCaptionsRequest) ProtoMessage() {}
+
+func (x *UploadClosedCaptionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_youtube_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadClosedCaptionsRequest.ProtoReflect.Descriptor instead.
+func (*UploadClosedCaptionsRequest) Descriptor() ([]byte, []int) {
+	return file_pb_youtube_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UploadClosedCaptionsRequest) GetVideoId() string {
+	if x != nil {
+		return x.VideoId
+	}
+	return ""
+}
+
+func (x *UploadClosedCaptionsRequest) GetLanguage() string {
+	if x != nil {
+		return x.Language
+	}
+	return ""
+}
+
+func (x *UploadClosedCaptionsRequest) GetSrt() string {
+	if x != nil {
+		return x.Srt
+	}
+	return ""
+}
+
+type UploadClosedCaptionsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *UploadClosedCaptionsResponse) Reset() {
+	*x = UploadClosedCaptionsResponse{}
+	mi := &file_pb_youtube_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadClosedCaptionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadClosedCaptionsResponse) ProtoMessage() {}
+
+func (x *UploadClosedCaptionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_youtube_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadClosedCaptionsResponse.ProtoReflect.Descriptor instead.
+func (*UploadClosedCaptionsResponse) Descriptor() ([]byte, []int) {
+	return file_pb_youtube_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UploadClosedCaptionsResponse) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 var File_pb_youtube_proto protoreflect.FileDescriptor
 
 var file_pb_youtube_proto_rawDesc = []byte{
@@ -503,13 +609,23 @@ var file_pb_youtube_proto_rawDesc = []byte{
 	0x73, 0x22, 0x32, 0x0a, 0x1e, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x43, 0x6c, 0x6f,
 	0x73, 0x65, 0x64, 0x43, 0x61, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x72, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x73, 0x72, 0x74, 0x42, 0x60, 0x0a, 0x06, 0x63, 0x6f, 0x6d, 0x2e, 0x70, 0x62, 0x42,
-	0x0c, 0x59, 0x6f, 0x75, 0x74, 0x75, 0x62, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a,
-	0x20, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x70, 0x6b, 0x75, 0x6c,
-	0x69, 0x6b, 0x30, 0x2f, 0x61, 0x75, 0x74, 0x6f, 0x63, 0x63, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70,
-	0x62, 0xa2, 0x02, 0x03, 0x50, 0x58, 0x58, 0xaa, 0x02, 0x02, 0x50, 0x62, 0xca, 0x02, 0x02, 0x50,
-	0x62, 0xe2, 0x02, 0x0e, 0x50, 0x62, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
-	0x74, 0x61, 0xea, 0x02, 0x02, 0x50, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x03, 0x73, 0x72, 0x74, 0x22, 0x66, 0x0a, 0x1b, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x43,
+	0x6c, 0x6f, 0x73, 0x65, 0x64, 0x43, 0x61, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x49, 0x64, 0x12,
+	0x1a, 0x0a, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x73,
+	0x72, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x72, 0x74, 0x22, 0x2e, 0x0a,
+	0x1c, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x64, 0x43, 0x61, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x42, 0x60, 0x0a,
+	0x06, 0x63, 0x6f, 0x6d, 0x2e, 0x70, 0x62, 0x42, 0x0c, 0x59, 0x6f, 0x75, 0x74, 0x75, 0x62, 0x65,
+	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x20, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x70, 0x6b, 0x75, 0x6c, 0x69, 0x6b, 0x30, 0x2f, 0x61, 0x75, 0x74, 0x6f,
+	0x63, 0x63, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x62, 0xa2, 0x02, 0x03, 0x50, 0x58, 0x58, 0xaa,
+	0x02, 0x02, 0x50, 0x62, 0xca, 0x02, 0x02, 0x50, 0x62, 0xe2, 0x02, 0x0e, 0x50, 0x62, 0x5c, 0x47,
+	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x02, 0x50, 0x62, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -524,7 +640,7 @@ func file_pb_youtube_proto_rawDescGZIP() []byte {
 	return file_pb_youtube_proto_rawDescData
 }
 
-var file_pb_youtube_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_pb_youtube_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_pb_youtube_proto_goTypes = []any{
 	(*Video)(nil),                          // 0: pb.Video
 	(*GetYoutubeVideosResponse)(nil),       // 1: pb.GetYoutubeVideosResponse
@@ -534,21 +650,23 @@ var file_pb_youtube_proto_goTypes = []any{
 	(*ClosedCaptionsEntry)(nil),            // 5: pb.ClosedCaptionsEntry
 	(*GetClosedCaptionsResponse)(nil),      // 6: pb.GetClosedCaptionsResponse
 	(*DownloadClosedCaptionsResponse)(nil), // 7: pb.DownloadClosedCaptionsResponse
-	nil,                                    // 8: pb.UpdateMetadataRequest.MetadataEntry
-	(*timestamppb.Timestamp)(nil),          // 9: google.protobuf.Timestamp
+	(*UploadClosedCaptionsRequest)(nil),    // 8: pb.UploadClosedCaptionsRequest
+	(*UploadClosedCaptionsResponse)(nil),   // 9: pb.UploadClosedCaptionsResponse
+	nil,                                    // 10: pb.UpdateMetadataRequest.MetadataEntry
+	(*timestamppb.Timestamp)(nil),          // 11: google.protobuf.Timestamp
 }
 var file_pb_youtube_proto_depIdxs = []int32{
-	9, // 0: pb.Video.published_at:type_name -> google.protobuf.Timestamp
-	0, // 1: pb.GetYoutubeVideosResponse.videos:type_name -> pb.Video
-	2, // 2: pb.GetMetadataResponse.metadata:type_name -> pb.Metadata
-	8, // 3: pb.UpdateMetadataRequest.metadata:type_name -> pb.UpdateMetadataRequest.MetadataEntry
-	5, // 4: pb.GetClosedCaptionsResponse.closed_captions:type_name -> pb.ClosedCaptionsEntry
-	2, // 5: pb.UpdateMetadataRequest.MetadataEntry.value:type_name -> pb.Metadata
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	11, // 0: pb.Video.published_at:type_name -> google.protobuf.Timestamp
+	0,  // 1: pb.GetYoutubeVideosResponse.videos:type_name -> pb.Video
+	2,  // 2: pb.GetMetadataResponse.metadata:type_name -> pb.Metadata
+	10, // 3: pb.UpdateMetadataRequest.metadata:type_name -> pb.UpdateMetadataRequest.MetadataEntry
+	5,  // 4: pb.GetClosedCaptionsResponse.closed_captions:type_name -> pb.ClosedCaptionsEntry
+	2,  // 5: pb.UpdateMetadataRequest.MetadataEntry.value:type_name -> pb.Metadata
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_pb_youtube_proto_init() }
@@ -562,7 +680,7 @@ func file_pb_youtube_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pb_youtube_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

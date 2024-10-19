@@ -33,6 +33,8 @@ type Youtube interface {
 	GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error)
 	// DownloadClosedCaptions downloads closed captions for a video.
 	DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error)
+	// UploadClosedCaptions uploads closed captions for a video.
+	UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error)
 }
 
 var _ Youtube = &youtube{}
@@ -242,4 +244,25 @@ func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID strin
 		return "", err
 	}
 	return string(body), nil
+}
+
+func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error) {
+	if userID == "" || videoID == "" || language == "" || srt == nil {
+		return "", ErrInvalidInput
+	}
+
+	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsUpload)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := service.Captions.Insert([]string{"snippet"}, &yt.Caption{Snippet: &yt.CaptionSnippet{
+		Language: language,
+		Name:     language,
+		VideoId:  videoID,
+	}}).Media(srt).Do()
+	if err != nil {
+		return "", err
+	}
+	return resp.Id, nil
 }
