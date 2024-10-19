@@ -50,11 +50,11 @@ func newToken(client *gocloak.GoCloak, realm, clientID, clientSecret string) (*t
 		for {
 			d := getDuration()
 			timer.Reset(d)
-			log.Info().Dur("duration", d).Msg("refreshing token in")
+			log.Debug().Dur("duration", d).Msg("refreshing token in")
 
 			select {
 			case <-timer.C:
-				log.Info().Msg("refreshing service account token")
+				log.Debug().Msg("refreshing service account token")
 
 				func() {
 					t.mutex.Lock()
@@ -97,7 +97,7 @@ func New(ctx context.Context, url, realm, clientID, clientSecret string) (*keycl
 		return nil, err
 	}
 
-	log.Info().Str("realm", realm).Msg("created keycloak auth")
+	log.Debug().Str("realm", realm).Msg("created keycloak auth")
 	return &keycloakAuth{
 		client: client,
 		token:  token,

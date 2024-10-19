@@ -20,6 +20,7 @@ import (
 type MockAuth struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthMockRecorder
+	isgomock struct{}
 }
 
 // MockAuthMockRecorder is the mock recorder for MockAuth.
@@ -40,15 +41,15 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 }
 
 // AuthMiddleware mocks base method.
-func (m *MockAuth) AuthMiddleware(arg0 http.Handler) http.Handler {
+func (m *MockAuth) AuthMiddleware(next http.Handler) http.Handler {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthMiddleware", arg0)
+	ret := m.ctrl.Call(m, "AuthMiddleware", next)
 	ret0, _ := ret[0].(http.Handler)
 	return ret0
 }
 
 // AuthMiddleware indicates an expected call of AuthMiddleware.
-func (mr *MockAuthMockRecorder) AuthMiddleware(arg0 any) *gomock.Call {
+func (mr *MockAuthMockRecorder) AuthMiddleware(next any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthMiddleware", reflect.TypeOf((*MockAuth)(nil).AuthMiddleware), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthMiddleware", reflect.TypeOf((*MockAuth)(nil).AuthMiddleware), next)
 }

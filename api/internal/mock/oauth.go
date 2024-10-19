@@ -23,6 +23,7 @@ import (
 type MockConfigs struct {
 	ctrl     *gomock.Controller
 	recorder *MockConfigsMockRecorder
+	isgomock struct{}
 }
 
 // MockConfigsMockRecorder is the mock recorder for MockConfigs.
@@ -43,24 +44,25 @@ func (m *MockConfigs) EXPECT() *MockConfigsMockRecorder {
 }
 
 // GetGoogle mocks base method.
-func (m *MockConfigs) GetGoogle(arg0, arg1 string) (oauth.OAuth2Config, string) {
+func (m *MockConfigs) GetGoogle(clientID, clientSecret string) (oauth.OAuth2Config, string) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGoogle", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetGoogle", clientID, clientSecret)
 	ret0, _ := ret[0].(oauth.OAuth2Config)
 	ret1, _ := ret[1].(string)
 	return ret0, ret1
 }
 
 // GetGoogle indicates an expected call of GetGoogle.
-func (mr *MockConfigsMockRecorder) GetGoogle(arg0, arg1 any) *gomock.Call {
+func (mr *MockConfigsMockRecorder) GetGoogle(clientID, clientSecret any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoogle", reflect.TypeOf((*MockConfigs)(nil).GetGoogle), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoogle", reflect.TypeOf((*MockConfigs)(nil).GetGoogle), clientID, clientSecret)
 }
 
 // MockOAuth2Config is a mock of OAuth2Config interface.
 type MockOAuth2Config struct {
 	ctrl     *gomock.Controller
 	recorder *MockOAuth2ConfigMockRecorder
+	isgomock struct{}
 }
 
 // MockOAuth2ConfigMockRecorder is the mock recorder for MockOAuth2Config.
@@ -81,10 +83,10 @@ func (m *MockOAuth2Config) EXPECT() *MockOAuth2ConfigMockRecorder {
 }
 
 // AuthCodeURL mocks base method.
-func (m *MockOAuth2Config) AuthCodeURL(arg0 string, arg1 ...oauth2.AuthCodeOption) string {
+func (m *MockOAuth2Config) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0}
-	for _, a := range arg1 {
+	varargs := []any{state}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "AuthCodeURL", varargs...)
@@ -93,31 +95,31 @@ func (m *MockOAuth2Config) AuthCodeURL(arg0 string, arg1 ...oauth2.AuthCodeOptio
 }
 
 // AuthCodeURL indicates an expected call of AuthCodeURL.
-func (mr *MockOAuth2ConfigMockRecorder) AuthCodeURL(arg0 any, arg1 ...any) *gomock.Call {
+func (mr *MockOAuth2ConfigMockRecorder) AuthCodeURL(state any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0}, arg1...)
+	varargs := append([]any{state}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthCodeURL", reflect.TypeOf((*MockOAuth2Config)(nil).AuthCodeURL), varargs...)
 }
 
 // Client mocks base method.
-func (m *MockOAuth2Config) Client(arg0 context.Context, arg1 *oauth2.Token) *http.Client {
+func (m *MockOAuth2Config) Client(ctx context.Context, t *oauth2.Token) *http.Client {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Client", arg0, arg1)
+	ret := m.ctrl.Call(m, "Client", ctx, t)
 	ret0, _ := ret[0].(*http.Client)
 	return ret0
 }
 
 // Client indicates an expected call of Client.
-func (mr *MockOAuth2ConfigMockRecorder) Client(arg0, arg1 any) *gomock.Call {
+func (mr *MockOAuth2ConfigMockRecorder) Client(ctx, t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Client", reflect.TypeOf((*MockOAuth2Config)(nil).Client), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Client", reflect.TypeOf((*MockOAuth2Config)(nil).Client), ctx, t)
 }
 
 // Exchange mocks base method.
-func (m *MockOAuth2Config) Exchange(arg0 context.Context, arg1 string, arg2 ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+func (m *MockOAuth2Config) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, code}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Exchange", varargs...)
@@ -127,22 +129,22 @@ func (m *MockOAuth2Config) Exchange(arg0 context.Context, arg1 string, arg2 ...o
 }
 
 // Exchange indicates an expected call of Exchange.
-func (mr *MockOAuth2ConfigMockRecorder) Exchange(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockOAuth2ConfigMockRecorder) Exchange(ctx, code any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, code}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exchange", reflect.TypeOf((*MockOAuth2Config)(nil).Exchange), varargs...)
 }
 
 // TokenSource mocks base method.
-func (m *MockOAuth2Config) TokenSource(arg0 context.Context, arg1 *oauth2.Token) oauth2.TokenSource {
+func (m *MockOAuth2Config) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TokenSource", arg0, arg1)
+	ret := m.ctrl.Call(m, "TokenSource", ctx, t)
 	ret0, _ := ret[0].(oauth2.TokenSource)
 	return ret0
 }
 
 // TokenSource indicates an expected call of TokenSource.
-func (mr *MockOAuth2ConfigMockRecorder) TokenSource(arg0, arg1 any) *gomock.Call {
+func (mr *MockOAuth2ConfigMockRecorder) TokenSource(ctx, t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TokenSource", reflect.TypeOf((*MockOAuth2Config)(nil).TokenSource), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TokenSource", reflect.TypeOf((*MockOAuth2Config)(nil).TokenSource), ctx, t)
 }

@@ -11,8 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/pb"
-	"github.com/pkulik0/autocc/api/internal/service"
+	"github.com/pkulik0/autocc/api/internal/translation"
 	"github.com/pkulik0/autocc/api/internal/version"
 	"github.com/pkulik0/autocc/api/internal/youtube"
 )
@@ -20,16 +21,18 @@ import (
 type GetYoutubeServiceFunc func(string) youtube.Youtube
 
 type server struct {
-	service service.Service
-	auth    auth.Auth
-	youtube youtube.Youtube
+	credentials credentials.Credentials
+	auth        auth.Auth
+	youtube     youtube.Youtube
+	translator  translation.Translator
 }
 
-func New(service service.Service, auth auth.Auth, youtube youtube.Youtube) *server {
+func New(credentials credentials.Credentials, auth auth.Auth, youtube youtube.Youtube, translator translation.Translator) *server {
 	return &server{
-		service: service,
-		auth:    auth,
-		youtube: youtube,
+		credentials: credentials,
+		auth:        auth,
+		youtube:     youtube,
+		translator:  translator,
 	}
 }
 
@@ -45,7 +48,7 @@ func (s *server) handlerRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlerCredentials(w http.ResponseWriter, r *http.Request) {
-	credentialsGoogle, credentialsDeepL, err := s.service.GetCredentials(r.Context())
+	credentialsGoogle, credentialsDeepL, err := s.credentials.GetCredentials(r.Context())
 	if err != nil {
 		errLog(w, err, "failed to get credentials", http.StatusInternalServerError)
 		return
@@ -70,10 +73,10 @@ func (s *server) handlerAddCredentialsGoogle(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	credentials, err := s.service.AddCredentialsGoogle(r.Context(), req.ClientId, req.ClientSecret)
+	cred, err := s.credentials.AddCredentialsGoogle(r.Context(), req.ClientId, req.ClientSecret)
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -81,7 +84,7 @@ func (s *server) handlerAddCredentialsGoogle(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writePb(w, &pb.AddCredentialsGoogleResponse{Credentials: credentials.ToProto()})
+	writePb(w, &pb.AddCredentialsGoogleResponse{Credentials: cred.ToProto()})
 }
 
 func (s *server) handlerAddCredentialsDeepL(w http.ResponseWriter, r *http.Request) {
@@ -92,10 +95,10 @@ func (s *server) handlerAddCredentialsDeepL(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	credentials, err := s.service.AddCredentialsDeepL(r.Context(), req.Key)
+	cred, err := s.credentials.AddCredentialsDeepL(r.Context(), req.Key)
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -103,7 +106,7 @@ func (s *server) handlerAddCredentialsDeepL(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writePb(w, &pb.AddCredentialsDeepLResponse{Credentials: credentials.ToProto()})
+	writePb(w, &pb.AddCredentialsDeepLResponse{Credentials: cred.ToProto()})
 }
 
 func parsePathID(r *http.Request) (uint, error) {
@@ -127,7 +130,7 @@ func (s *server) handlerRemoveCredentialsGoogle(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = s.service.RemoveCredentialsGoogle(r.Context(), uint(id))
+	err = s.credentials.RemoveCredentialsGoogle(r.Context(), uint(id))
 	if err != nil {
 		errLog(w, err, "failed to remove google credentials", http.StatusInternalServerError)
 		return
@@ -143,7 +146,7 @@ func (s *server) handlerRemoveCredentialsDeepL(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = s.service.RemoveCredentialsDeepL(r.Context(), uint(id))
+	err = s.credentials.RemoveCredentialsDeepL(r.Context(), uint(id))
 	if err != nil {
 		errLog(w, err, "failed to remove deepl credentials", http.StatusInternalServerError)
 		return
@@ -167,10 +170,10 @@ func (s *server) handlerSessionGoogleURL(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	url, err := s.service.GetSessionGoogleURL(r.Context(), credentialsID, userID, redirectURL)
+	url, err := s.credentials.GetSessionGoogleURL(r.Context(), credentialsID, userID, redirectURL)
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -193,10 +196,10 @@ func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Req
 	state := r.FormValue("state")
 	code := r.FormValue("code")
 
-	url, err := s.service.CreateSessionGoogle(r.Context(), state, code)
+	url, err := s.credentials.CreateSessionGoogle(r.Context(), state, code)
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -214,10 +217,10 @@ func (s *server) handlerUserSessionsGoogle(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	sessions, err := s.service.GetSessionsGoogleByUser(r.Context(), userID)
+	sessions, err := s.credentials.GetSessionsGoogleByUser(r.Context(), userID)
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -245,10 +248,10 @@ func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = s.service.RemoveSessionGoogle(r.Context(), userID, uint(credentialsID))
+	err = s.credentials.RemoveSessionGoogle(r.Context(), userID, uint(credentialsID))
 	switch err {
 	case nil:
-	case service.ErrInvalidInput:
+	case credentials.ErrInvalidInput:
 		errLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:

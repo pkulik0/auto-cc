@@ -1,7 +1,8 @@
 package quota
 
 const (
-	Google = 10000
+	Google = 10_000
+	DeepL  = 500_000
 )
 
 const (

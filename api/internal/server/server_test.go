@@ -13,10 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/mock"
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/pb"
-	"github.com/pkulik0/autocc/api/internal/service"
 )
 
 func TestHandlerRoot(t *testing.T) {
@@ -25,7 +25,7 @@ func TestHandlerRoot(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
-	s := New(nil, nil, nil)
+	s := New(nil, nil, nil, nil)
 	s.handlerRoot(w, r)
 
 	c.Assert(w.Code, qt.Equals, http.StatusOK)
@@ -48,12 +48,12 @@ func TestHandlerCredentials(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetCredentials(gomock.Any()).Return(google, deepl, nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -83,7 +83,7 @@ func TestHandlerCredentials(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetCredentials(gomock.Any()).Return(nil, nil, retErr)
 			},
 			test: func(c *qt.C, server *server) {
@@ -101,10 +101,10 @@ func TestHandlerCredentials(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -122,12 +122,12 @@ func TestAddCredentialsGoogle(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(&model.CredentialsGoogle{ClientID: "id", ClientSecret: "secret"}, nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -148,7 +148,7 @@ func TestAddCredentialsGoogle(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(nil, errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -162,8 +162,8 @@ func TestAddCredentialsGoogle(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(nil, service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(nil, credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -176,7 +176,7 @@ func TestAddCredentialsGoogle(t *testing.T) {
 		},
 		{
 			name:       "invalid request",
-			setupMocks: func(s *mock.MockService) {},
+			setupMocks: func(s *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("POST", "/credentials/google", strings.NewReader("invalid"))
@@ -192,10 +192,10 @@ func TestAddCredentialsGoogle(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -213,12 +213,12 @@ func TestAddCredentialsDeepL(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(&model.CredentialsDeepL{Key: key}, nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -238,7 +238,7 @@ func TestAddCredentialsDeepL(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(nil, errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -252,8 +252,8 @@ func TestAddCredentialsDeepL(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(nil, service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(nil, credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -266,7 +266,7 @@ func TestAddCredentialsDeepL(t *testing.T) {
 		},
 		{
 			name:       "invalid request",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("POST", "/credentials/deepl", strings.NewReader("invalid"))
@@ -282,10 +282,10 @@ func TestAddCredentialsDeepL(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -296,12 +296,12 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -316,7 +316,7 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -331,7 +331,7 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 		},
 		{
 			name:       "invalid id",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("DELETE", "/credentials/google/invalid", nil)
@@ -348,10 +348,10 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -362,12 +362,12 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -382,7 +382,7 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -397,7 +397,7 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 		},
 		{
 			name:       "invalid id",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("DELETE", "/credentials/deepl/invalid", nil)
@@ -414,10 +414,10 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -428,12 +428,12 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("url", nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -454,7 +454,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("", errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -470,8 +470,8 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("", service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("", credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -486,7 +486,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		},
 		{
 			name:       "invalid id",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("POST", "/sessions/google/invalid?redirect_url=redirectURL", nil)
@@ -500,7 +500,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		},
 		{
 			name:       "no user",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("POST", "/sessions/google/1?redirect_url=redirectURL", nil)
@@ -517,10 +517,10 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -531,12 +531,12 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().CreateSessionGoogle(gomock.Any(), "state", "code").Return("http://example.com", nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -555,7 +555,7 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().CreateSessionGoogle(gomock.Any(), "state", "code").Return("", errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -573,8 +573,8 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().CreateSessionGoogle(gomock.Any(), "", "").Return("", service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().CreateSessionGoogle(gomock.Any(), "", "").Return("", credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -595,10 +595,10 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -609,12 +609,12 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return([]model.SessionGoogle{{CredentialsID: 123}}, nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -635,7 +635,7 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return(nil, errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -650,8 +650,8 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return(nil, service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return(nil, credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -665,7 +665,7 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 		},
 		{
 			name:       "no user",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("GET", "/sessions/google", nil)
@@ -681,10 +681,10 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -695,12 +695,12 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		setupMocks func(service *mock.MockService)
+		setupMocks func(service *mock.MockCredentials)
 		test       func(c *qt.C, s *server)
 	}{
 		{
 			name: "success",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(nil)
 			},
 			test: func(c *qt.C, server *server) {
@@ -716,7 +716,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		},
 		{
 			name: "error",
-			setupMocks: func(service *mock.MockService) {
+			setupMocks: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(errors.New("error"))
 			},
 			test: func(c *qt.C, server *server) {
@@ -732,8 +732,8 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		},
 		{
 			name: "invalid input",
-			setupMocks: func(s *mock.MockService) {
-				s.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(service.ErrInvalidInput)
+			setupMocks: func(s *mock.MockCredentials) {
+				s.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(credentials.ErrInvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -748,7 +748,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		},
 		{
 			name:       "invalid id",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("DELETE", "/sessions/google/invalid", nil)
@@ -762,7 +762,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		},
 		{
 			name:       "no user",
-			setupMocks: func(service *mock.MockService) {},
+			setupMocks: func(service *mock.MockCredentials) {},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("DELETE", "/sessions/google/1", nil)
@@ -779,10 +779,10 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(c)
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil)
+			s := New(service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -855,7 +855,7 @@ func TestGetMux(t *testing.T) {
 		hasUser        bool
 		isSuperuser    bool
 		expectedStatus int
-		setupMock      func(service *mock.MockService)
+		setupMock      func(service *mock.MockCredentials)
 	}{
 		{
 			name:           "credentials success",
@@ -863,7 +863,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        true,
 			expectedStatus: http.StatusOK,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().GetCredentials(gomock.Any()).Return(nil, nil, nil)
 			},
 		},
@@ -873,7 +873,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials google success",
@@ -882,7 +882,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    true,
 			expectedStatus: http.StatusOK,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsGoogle(gomock.Any(), gomock.Any(), gomock.Any()).Return(&model.CredentialsGoogle{}, nil)
 			},
 		},
@@ -892,7 +892,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodPost,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials google not superuser",
@@ -901,7 +901,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials deepl success",
@@ -910,7 +910,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    true,
 			expectedStatus: http.StatusOK,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().AddCredentialsDeepL(gomock.Any(), gomock.Any()).Return(&model.CredentialsDeepL{}, nil)
 			},
 		},
@@ -920,7 +920,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodPost,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials deepl not superuser",
@@ -929,7 +929,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials google remove success",
@@ -938,7 +938,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    true,
 			expectedStatus: http.StatusNoContent,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsGoogle(gomock.Any(), uint(1)).Return(nil)
 			},
 		},
@@ -948,7 +948,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodDelete,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials google remove not superuser",
@@ -957,7 +957,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials deepl remove success",
@@ -966,7 +966,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    true,
 			expectedStatus: http.StatusNoContent,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().RemoveCredentialsDeepL(gomock.Any(), uint(1)).Return(nil)
 			},
 		},
@@ -976,7 +976,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodDelete,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "credentials deepl remove not superuser",
@@ -985,7 +985,7 @@ func TestGetMux(t *testing.T) {
 			hasUser:        true,
 			isSuperuser:    false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "sessions google url success",
@@ -993,7 +993,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        true,
 			expectedStatus: http.StatusOK,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), gomock.Any(), gomock.Any()).Return("url", nil)
 			},
 		},
@@ -1003,7 +1003,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "sessions google",
@@ -1011,7 +1011,7 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        true,
 			expectedStatus: http.StatusOK,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().GetSessionsGoogleByUser(gomock.Any(), gomock.Any()).Return(nil, nil)
 			},
 		},
@@ -1021,14 +1021,14 @@ func TestGetMux(t *testing.T) {
 			method:         http.MethodGet,
 			hasUser:        false,
 			expectedStatus: http.StatusForbidden,
-			setupMock:      func(service *mock.MockService) {},
+			setupMock:      func(service *mock.MockCredentials) {},
 		},
 		{
 			name:           "sessions google callback success",
 			endpoint:       "/sessions/google/callback",
 			method:         http.MethodGet,
 			expectedStatus: http.StatusFound,
-			setupMock: func(service *mock.MockService) {
+			setupMock: func(service *mock.MockCredentials) {
 				service.EXPECT().CreateSessionGoogle(gomock.Any(), gomock.Any(), gomock.Any()).Return("http://example.com", nil)
 			},
 		},
@@ -1049,10 +1049,10 @@ func TestGetMux(t *testing.T) {
 				})
 			})
 
-			service := mock.NewMockService(ctrl)
+			service := mock.NewMockCredentials(ctrl)
 			tc.setupMock(service)
 
-			s := New(service, a, nil)
+			s := New(service, a, nil, nil)
 			mux := s.getMux()
 
 			w := httptest.NewRecorder()

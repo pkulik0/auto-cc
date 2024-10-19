@@ -9,10 +9,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/server"
-	"github.com/pkulik0/autocc/api/internal/service"
 	"github.com/pkulik0/autocc/api/internal/store"
+	"github.com/pkulik0/autocc/api/internal/translation"
 	"github.com/pkulik0/autocc/api/internal/version"
 	"github.com/pkulik0/autocc/api/internal/youtube"
 )
@@ -38,20 +39,23 @@ func main() {
 
 	log.Info().Str("version", version.Version).Str("build_time", version.BuildTime).Msg("AutoCC API")
 
-	store, err := store.New(c.PostgresHost, c.PostgresPort, c.PostgresUser, c.PostgresPass, c.PostgresDB)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create store")
-	}
-	oauth := oauth.New(c.GoogleCallbackURL)
-	service := service.New(store, oauth)
-
 	auth, err := auth.New(context.Background(), c.KeycloakURL, c.KeycloakRealm, c.KeycloakClientId, c.KeycloakClientSecret)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create auth")
 	}
 
+	store, err := store.New(c.PostgresHost, c.PostgresPort, c.PostgresUser, c.PostgresPass, c.PostgresDB)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create store")
+	}
+
+	oauth := oauth.New(c.GoogleCallbackURL)
+	credentials := credentials.New(store, oauth)
+
 	youtube := youtube.New(store)
-	server := server.New(service, auth, youtube)
+	translator := translation.New(store)
+
+	server := server.New(credentials, auth, youtube, translator)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

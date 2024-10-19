@@ -23,6 +23,7 @@ import (
 type MockStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockStoreMockRecorder
+	isgomock struct{}
 }
 
 // MockStoreMockRecorder is the mock recorder for MockStore.
@@ -43,129 +44,145 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // AddCredentialsDeepL mocks base method.
-func (m *MockStore) AddCredentialsDeepL(arg0 context.Context, arg1 string) (*model.CredentialsDeepL, error) {
+func (m *MockStore) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddCredentialsDeepL", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddCredentialsDeepL", ctx, key)
 	ret0, _ := ret[0].(*model.CredentialsDeepL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddCredentialsDeepL indicates an expected call of AddCredentialsDeepL.
-func (mr *MockStoreMockRecorder) AddCredentialsDeepL(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) AddCredentialsDeepL(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).AddCredentialsDeepL), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).AddCredentialsDeepL), ctx, key)
 }
 
 // AddCredentialsGoogle mocks base method.
-func (m *MockStore) AddCredentialsGoogle(arg0 context.Context, arg1, arg2 string) (*model.CredentialsGoogle, error) {
+func (m *MockStore) AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddCredentialsGoogle", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "AddCredentialsGoogle", ctx, clientID, clientSecret)
 	ret0, _ := ret[0].(*model.CredentialsGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddCredentialsGoogle indicates an expected call of AddCredentialsGoogle.
-func (mr *MockStoreMockRecorder) AddCredentialsGoogle(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) AddCredentialsGoogle(ctx, clientID, clientSecret any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsGoogle", reflect.TypeOf((*MockStore)(nil).AddCredentialsGoogle), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCredentialsGoogle", reflect.TypeOf((*MockStore)(nil).AddCredentialsGoogle), ctx, clientID, clientSecret)
 }
 
 // CreateSessionGoogle mocks base method.
-func (m *MockStore) CreateSessionGoogle(arg0 context.Context, arg1, arg2, arg3, arg4 string, arg5 time.Time, arg6 model.CredentialsGoogle) (*model.SessionGoogle, error) {
+func (m *MockStore) CreateSessionGoogle(ctx context.Context, userID, accessToken, refreshToken, scopes string, expiry time.Time, credentials model.CredentialsGoogle) (*model.SessionGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSessionGoogle", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "CreateSessionGoogle", ctx, userID, accessToken, refreshToken, scopes, expiry, credentials)
 	ret0, _ := ret[0].(*model.SessionGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateSessionGoogle indicates an expected call of CreateSessionGoogle.
-func (mr *MockStoreMockRecorder) CreateSessionGoogle(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) CreateSessionGoogle(ctx, userID, accessToken, refreshToken, scopes, expiry, credentials any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionGoogle", reflect.TypeOf((*MockStore)(nil).CreateSessionGoogle), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionGoogle", reflect.TypeOf((*MockStore)(nil).CreateSessionGoogle), ctx, userID, accessToken, refreshToken, scopes, expiry, credentials)
 }
 
 // GetCredentialsDeepLAll mocks base method.
-func (m *MockStore) GetCredentialsDeepLAll(arg0 context.Context) ([]model.CredentialsDeepL, error) {
+func (m *MockStore) GetCredentialsDeepLAll(ctx context.Context) ([]model.CredentialsDeepL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCredentialsDeepLAll", arg0)
+	ret := m.ctrl.Call(m, "GetCredentialsDeepLAll", ctx)
 	ret0, _ := ret[0].([]model.CredentialsDeepL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCredentialsDeepLAll indicates an expected call of GetCredentialsDeepLAll.
-func (mr *MockStoreMockRecorder) GetCredentialsDeepLAll(arg0 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetCredentialsDeepLAll(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsDeepLAll", reflect.TypeOf((*MockStore)(nil).GetCredentialsDeepLAll), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsDeepLAll", reflect.TypeOf((*MockStore)(nil).GetCredentialsDeepLAll), ctx)
+}
+
+// GetCredentialsDeepLByAvailableCost mocks base method.
+func (m *MockStore) GetCredentialsDeepLByAvailableCost(ctx context.Context, cost uint) (*model.CredentialsDeepL, func() error, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCredentialsDeepLByAvailableCost", ctx, cost)
+	ret0, _ := ret[0].(*model.CredentialsDeepL)
+	ret1, _ := ret[1].(func() error)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetCredentialsDeepLByAvailableCost indicates an expected call of GetCredentialsDeepLByAvailableCost.
+func (mr *MockStoreMockRecorder) GetCredentialsDeepLByAvailableCost(ctx, cost any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsDeepLByAvailableCost", reflect.TypeOf((*MockStore)(nil).GetCredentialsDeepLByAvailableCost), ctx, cost)
 }
 
 // GetCredentialsDeepLByID mocks base method.
-func (m *MockStore) GetCredentialsDeepLByID(arg0 context.Context, arg1 uint) (*model.CredentialsDeepL, error) {
+func (m *MockStore) GetCredentialsDeepLByID(ctx context.Context, id uint) (*model.CredentialsDeepL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCredentialsDeepLByID", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetCredentialsDeepLByID", ctx, id)
 	ret0, _ := ret[0].(*model.CredentialsDeepL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCredentialsDeepLByID indicates an expected call of GetCredentialsDeepLByID.
-func (mr *MockStoreMockRecorder) GetCredentialsDeepLByID(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetCredentialsDeepLByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsDeepLByID", reflect.TypeOf((*MockStore)(nil).GetCredentialsDeepLByID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsDeepLByID", reflect.TypeOf((*MockStore)(nil).GetCredentialsDeepLByID), ctx, id)
 }
 
 // GetCredentialsGoogleAll mocks base method.
-func (m *MockStore) GetCredentialsGoogleAll(arg0 context.Context) ([]model.CredentialsGoogle, error) {
+func (m *MockStore) GetCredentialsGoogleAll(ctx context.Context) ([]model.CredentialsGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCredentialsGoogleAll", arg0)
+	ret := m.ctrl.Call(m, "GetCredentialsGoogleAll", ctx)
 	ret0, _ := ret[0].([]model.CredentialsGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCredentialsGoogleAll indicates an expected call of GetCredentialsGoogleAll.
-func (mr *MockStoreMockRecorder) GetCredentialsGoogleAll(arg0 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetCredentialsGoogleAll(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsGoogleAll", reflect.TypeOf((*MockStore)(nil).GetCredentialsGoogleAll), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsGoogleAll", reflect.TypeOf((*MockStore)(nil).GetCredentialsGoogleAll), ctx)
 }
 
 // GetCredentialsGoogleByID mocks base method.
-func (m *MockStore) GetCredentialsGoogleByID(arg0 context.Context, arg1 uint) (*model.CredentialsGoogle, error) {
+func (m *MockStore) GetCredentialsGoogleByID(ctx context.Context, id uint) (*model.CredentialsGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCredentialsGoogleByID", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetCredentialsGoogleByID", ctx, id)
 	ret0, _ := ret[0].(*model.CredentialsGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCredentialsGoogleByID indicates an expected call of GetCredentialsGoogleByID.
-func (mr *MockStoreMockRecorder) GetCredentialsGoogleByID(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetCredentialsGoogleByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsGoogleByID", reflect.TypeOf((*MockStore)(nil).GetCredentialsGoogleByID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentialsGoogleByID", reflect.TypeOf((*MockStore)(nil).GetCredentialsGoogleByID), ctx, id)
 }
 
 // GetSessionGoogleAll mocks base method.
-func (m *MockStore) GetSessionGoogleAll(arg0 context.Context, arg1 string) ([]model.SessionGoogle, error) {
+func (m *MockStore) GetSessionGoogleAll(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionGoogleAll", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetSessionGoogleAll", ctx, userID)
 	ret0, _ := ret[0].([]model.SessionGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSessionGoogleAll indicates an expected call of GetSessionGoogleAll.
-func (mr *MockStoreMockRecorder) GetSessionGoogleAll(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetSessionGoogleAll(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleAll", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleAll), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleAll", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleAll), ctx, userID)
 }
 
 // GetSessionGoogleByAvailableCost mocks base method.
-func (m *MockStore) GetSessionGoogleByAvailableCost(arg0 context.Context, arg1 string, arg2 uint) (*model.SessionGoogle, func() error, error) {
+func (m *MockStore) GetSessionGoogleByAvailableCost(ctx context.Context, userID string, cost uint) (*model.SessionGoogle, func() error, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionGoogleByAvailableCost", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetSessionGoogleByAvailableCost", ctx, userID, cost)
 	ret0, _ := ret[0].(*model.SessionGoogle)
 	ret1, _ := ret[1].(func() error)
 	ret2, _ := ret[2].(error)
@@ -173,121 +190,121 @@ func (m *MockStore) GetSessionGoogleByAvailableCost(arg0 context.Context, arg1 s
 }
 
 // GetSessionGoogleByAvailableCost indicates an expected call of GetSessionGoogleByAvailableCost.
-func (mr *MockStoreMockRecorder) GetSessionGoogleByAvailableCost(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetSessionGoogleByAvailableCost(ctx, userID, cost any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleByAvailableCost", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleByAvailableCost), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleByAvailableCost", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleByAvailableCost), ctx, userID, cost)
 }
 
 // GetSessionGoogleByCredentialsID mocks base method.
-func (m *MockStore) GetSessionGoogleByCredentialsID(arg0 context.Context, arg1 uint, arg2 string) (*model.SessionGoogle, error) {
+func (m *MockStore) GetSessionGoogleByCredentialsID(ctx context.Context, credentialsID uint, userID string) (*model.SessionGoogle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionGoogleByCredentialsID", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetSessionGoogleByCredentialsID", ctx, credentialsID, userID)
 	ret0, _ := ret[0].(*model.SessionGoogle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSessionGoogleByCredentialsID indicates an expected call of GetSessionGoogleByCredentialsID.
-func (mr *MockStoreMockRecorder) GetSessionGoogleByCredentialsID(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetSessionGoogleByCredentialsID(ctx, credentialsID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleByCredentialsID", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleByCredentialsID), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionGoogleByCredentialsID", reflect.TypeOf((*MockStore)(nil).GetSessionGoogleByCredentialsID), ctx, credentialsID, userID)
 }
 
 // GetSessionState mocks base method.
-func (m *MockStore) GetSessionState(arg0 context.Context, arg1 string) (*model.SessionState, error) {
+func (m *MockStore) GetSessionState(ctx context.Context, state string) (*model.SessionState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionState", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetSessionState", ctx, state)
 	ret0, _ := ret[0].(*model.SessionState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSessionState indicates an expected call of GetSessionState.
-func (mr *MockStoreMockRecorder) GetSessionState(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetSessionState(ctx, state any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionState", reflect.TypeOf((*MockStore)(nil).GetSessionState), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionState", reflect.TypeOf((*MockStore)(nil).GetSessionState), ctx, state)
 }
 
 // RemoveCredentialsDeepL mocks base method.
-func (m *MockStore) RemoveCredentialsDeepL(arg0 context.Context, arg1 uint) error {
+func (m *MockStore) RemoveCredentialsDeepL(ctx context.Context, id uint) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveCredentialsDeepL", arg0, arg1)
+	ret := m.ctrl.Call(m, "RemoveCredentialsDeepL", ctx, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveCredentialsDeepL indicates an expected call of RemoveCredentialsDeepL.
-func (mr *MockStoreMockRecorder) RemoveCredentialsDeepL(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) RemoveCredentialsDeepL(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).RemoveCredentialsDeepL), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCredentialsDeepL", reflect.TypeOf((*MockStore)(nil).RemoveCredentialsDeepL), ctx, id)
 }
 
 // RemoveCredentialsGoogle mocks base method.
-func (m *MockStore) RemoveCredentialsGoogle(arg0 context.Context, arg1 uint) error {
+func (m *MockStore) RemoveCredentialsGoogle(ctx context.Context, id uint) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveCredentialsGoogle", arg0, arg1)
+	ret := m.ctrl.Call(m, "RemoveCredentialsGoogle", ctx, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveCredentialsGoogle indicates an expected call of RemoveCredentialsGoogle.
-func (mr *MockStoreMockRecorder) RemoveCredentialsGoogle(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) RemoveCredentialsGoogle(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCredentialsGoogle", reflect.TypeOf((*MockStore)(nil).RemoveCredentialsGoogle), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCredentialsGoogle", reflect.TypeOf((*MockStore)(nil).RemoveCredentialsGoogle), ctx, id)
 }
 
 // RemoveSessionGoogle mocks base method.
-func (m *MockStore) RemoveSessionGoogle(arg0 context.Context, arg1 string, arg2 uint) error {
+func (m *MockStore) RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveSessionGoogle", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "RemoveSessionGoogle", ctx, userID, credentialsID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RemoveSessionGoogle indicates an expected call of RemoveSessionGoogle.
-func (mr *MockStoreMockRecorder) RemoveSessionGoogle(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) RemoveSessionGoogle(ctx, userID, credentialsID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSessionGoogle", reflect.TypeOf((*MockStore)(nil).RemoveSessionGoogle), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSessionGoogle", reflect.TypeOf((*MockStore)(nil).RemoveSessionGoogle), ctx, userID, credentialsID)
 }
 
 // SaveSessionState mocks base method.
-func (m *MockStore) SaveSessionState(arg0 context.Context, arg1 uint, arg2, arg3, arg4, arg5 string) error {
+func (m *MockStore) SaveSessionState(ctx context.Context, credentialsID uint, userID, state, scopes, redirectURL string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveSessionState", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "SaveSessionState", ctx, credentialsID, userID, state, scopes, redirectURL)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveSessionState indicates an expected call of SaveSessionState.
-func (mr *MockStoreMockRecorder) SaveSessionState(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) SaveSessionState(ctx, credentialsID, userID, state, scopes, redirectURL any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSessionState", reflect.TypeOf((*MockStore)(nil).SaveSessionState), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSessionState", reflect.TypeOf((*MockStore)(nil).SaveSessionState), ctx, credentialsID, userID, state, scopes, redirectURL)
 }
 
 // Transaction mocks base method.
-func (m *MockStore) Transaction(arg0 context.Context, arg1 func(context.Context, store.Store) error) error {
+func (m *MockStore) Transaction(ctx context.Context, f func(context.Context, store.Store) error) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Transaction", arg0, arg1)
+	ret := m.ctrl.Call(m, "Transaction", ctx, f)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Transaction indicates an expected call of Transaction.
-func (mr *MockStoreMockRecorder) Transaction(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) Transaction(ctx, f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transaction", reflect.TypeOf((*MockStore)(nil).Transaction), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transaction", reflect.TypeOf((*MockStore)(nil).Transaction), ctx, f)
 }
 
 // UpdateSessionGoogle mocks base method.
-func (m *MockStore) UpdateSessionGoogle(arg0 context.Context, arg1 *model.SessionGoogle) error {
+func (m *MockStore) UpdateSessionGoogle(ctx context.Context, session *model.SessionGoogle) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSessionGoogle", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateSessionGoogle", ctx, session)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateSessionGoogle indicates an expected call of UpdateSessionGoogle.
-func (mr *MockStoreMockRecorder) UpdateSessionGoogle(arg0, arg1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) UpdateSessionGoogle(ctx, session any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSessionGoogle", reflect.TypeOf((*MockStore)(nil).UpdateSessionGoogle), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSessionGoogle", reflect.TypeOf((*MockStore)(nil).UpdateSessionGoogle), ctx, session)
 }

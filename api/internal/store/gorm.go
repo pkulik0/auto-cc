@@ -30,7 +30,7 @@ func New(host string, port uint16, user, pass, dbName string) (*gormStore, error
 	if err != nil {
 		return nil, err
 	}
-	log.Info().Str("host", host).Uint16("port", port).Str("user", user).Str("db", dbName).Msg("connected to psql")
+	log.Debug().Str("host", host).Uint16("port", port).Str("user", user).Str("db", dbName).Msg("connected to psql")
 
 	db.AutoMigrate(&model.CredentialsGoogle{}, &model.CredentialsDeepL{}, &model.SessionGoogle{}, &model.SessionState{})
 	log.Debug().Msg("migrated database models")
@@ -272,4 +272,34 @@ func (s *gormStore) UpdateSessionGoogle(ctx context.Context, session *model.Sess
 	}
 
 	return nil
+}
+
+func (s *gormStore) GetCredentialsDeepLByAvailableCost(ctx context.Context, cost uint) (*model.CredentialsDeepL, func() error, error) {
+	var credentials model.CredentialsDeepL
+
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		result := tx.Where("usage < ?", quota.DeepL-cost).
+			Order("usage").
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&credentials)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		result = tx.Model(&credentials).Update("usage", gorm.Expr("usage + ?", cost))
+		if result.Error != nil {
+			return result.Error
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	revert := func() error {
+		return s.db.WithContext(ctx).Model(&credentials).Update("usage", gorm.Expr("usage - ?", cost)).Error
+	}
+
+	credentials.Usage += cost
+	return &credentials, revert, nil
 }

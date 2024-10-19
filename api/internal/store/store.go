@@ -23,6 +23,9 @@ type Store interface {
 	GetCredentialsGoogleAll(ctx context.Context) ([]model.CredentialsGoogle, error)
 	// GetCredentialsDeepLAll returns all DeepL client credentials.
 	GetCredentialsDeepLAll(ctx context.Context) ([]model.CredentialsDeepL, error)
+	// GetCredentialsDeepLByAvailableCost returns a DeepL client credentials with N cost to spend.
+	// It updates the credentials usage and returns a function to revert the operation.
+	GetCredentialsDeepLByAvailableCost(ctx context.Context, cost uint) (*model.CredentialsDeepL, func() error, error)
 
 	// GetCredentialsGoogleByID returns Google client credentials by ID.
 	GetCredentialsGoogleByID(ctx context.Context, id uint) (*model.CredentialsGoogle, error)

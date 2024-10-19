@@ -1,4 +1,4 @@
-package service
+package credentials
 
 import (
 	"context"
@@ -15,10 +15,10 @@ import (
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
-// Service is an interface for the service layer.
+// Credentials is an interface for the credentials service.
 //
-//go:generate mockgen -destination=../mock/service.go -package=mock . Service
-type Service interface {
+//go:generate mockgen -destination=../mock/credentials.go -package=mock . Credentials
+type Credentials interface {
 	// AddCredentialsGoogle adds Google client credentials to the store.
 	AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error)
 	// AddCredentialsDeepL adds DeepL client credentials to the store.
@@ -42,17 +42,17 @@ type Service interface {
 	GetSessionsGoogleByUser(ctx context.Context, userID string) ([]model.SessionGoogle, error)
 }
 
-var _ Service = &service{}
+var _ Credentials = &credentials{}
 
-type service struct {
+type credentials struct {
 	store store.Store
 	oauth oauth.Configs
 }
 
-// New creates a new service.
-func New(s store.Store, o oauth.Configs) *service {
-	log.Info().Msg("created service")
-	return &service{
+// New creates a new credentials service.
+func New(s store.Store, o oauth.Configs) *credentials {
+	log.Debug().Msg("created credentials service")
+	return &credentials{
 		store: s,
 		oauth: o,
 	}
@@ -62,29 +62,29 @@ var (
 	ErrInvalidInput = errors.New("invalid input")
 )
 
-func (s *service) AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error) {
+func (c *credentials) AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error) {
 	if clientID == "" || clientSecret == "" {
 		return nil, ErrInvalidInput
 	}
 
-	return s.store.AddCredentialsGoogle(ctx, clientID, clientSecret)
+	return c.store.AddCredentialsGoogle(ctx, clientID, clientSecret)
 }
 
-func (s *service) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
+func (c *credentials) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
 	if key == "" {
 		return nil, ErrInvalidInput
 	}
 
-	return s.store.AddCredentialsDeepL(ctx, key)
+	return c.store.AddCredentialsDeepL(ctx, key)
 }
 
-func (s *service) GetCredentials(ctx context.Context) ([]model.CredentialsGoogle, []model.CredentialsDeepL, error) {
-	google, err := s.store.GetCredentialsGoogleAll(ctx)
+func (c *credentials) GetCredentials(ctx context.Context) ([]model.CredentialsGoogle, []model.CredentialsDeepL, error) {
+	google, err := c.store.GetCredentialsGoogleAll(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	deepL, err := s.store.GetCredentialsDeepLAll(ctx)
+	deepL, err := c.store.GetCredentialsDeepLAll(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,12 +92,12 @@ func (s *service) GetCredentials(ctx context.Context) ([]model.CredentialsGoogle
 	return google, deepL, nil
 }
 
-func (s *service) RemoveCredentialsGoogle(ctx context.Context, id uint) error {
-	return s.store.RemoveCredentialsGoogle(ctx, id)
+func (c *credentials) RemoveCredentialsGoogle(ctx context.Context, id uint) error {
+	return c.store.RemoveCredentialsGoogle(ctx, id)
 }
 
-func (s *service) RemoveCredentialsDeepL(ctx context.Context, id uint) error {
-	return s.store.RemoveCredentialsDeepL(ctx, id)
+func (c *credentials) RemoveCredentialsDeepL(ctx context.Context, id uint) error {
+	return c.store.RemoveCredentialsDeepL(ctx, id)
 }
 
 func generateState() (string, error) {
@@ -113,7 +113,7 @@ var (
 	urlRegex = regexp.MustCompile(`^https?://`)
 )
 
-func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID, redirectURL string) (string, error) {
+func (c *credentials) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID, redirectURL string) (string, error) {
 	if userID == "" {
 		return "", ErrInvalidInput
 	}
@@ -121,17 +121,17 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 		return "", ErrInvalidInput
 	}
 
-	credentials, err := s.store.GetCredentialsGoogleByID(ctx, credentialsID)
+	credentials, err := c.store.GetCredentialsGoogleByID(ctx, credentialsID)
 	if err != nil {
 		return "", err
 	}
-	oauthClient, scopes := s.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
+	oauthClient, scopes := c.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
 
 	state, err := generateState()
 	if err != nil {
 		return "", err
 	}
-	err = s.store.SaveSessionState(ctx, credentialsID, userID, state, scopes, redirectURL)
+	err = c.store.SaveSessionState(ctx, credentialsID, userID, state, scopes, redirectURL)
 	if err != nil {
 		return "", err
 	}
@@ -139,44 +139,44 @@ func (s *service) GetSessionGoogleURL(ctx context.Context, credentialsID uint, u
 	return oauthClient.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
 }
 
-func (s *service) CreateSessionGoogle(ctx context.Context, state, code string) (string, error) {
+func (c *credentials) CreateSessionGoogle(ctx context.Context, state, code string) (string, error) {
 	if state == "" || code == "" {
 		return "", ErrInvalidInput
 	}
 
-	sessionState, err := s.store.GetSessionState(ctx, state)
+	sessionState, err := c.store.GetSessionState(ctx, state)
 	if err != nil {
 		return "", err
 	}
 
-	credentials, err := s.store.GetCredentialsGoogleByID(ctx, sessionState.CredentialsID)
+	credentials, err := c.store.GetCredentialsGoogleByID(ctx, sessionState.CredentialsID)
 	if err != nil {
 		return "", err
 	}
-	oauthClient, _ := s.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
+	oauthClient, _ := c.oauth.GetGoogle(credentials.ClientID, credentials.ClientSecret)
 
 	token, err := oauthClient.Exchange(ctx, code)
 	if err != nil {
 		return "", err
 	}
 
-	_, err = s.store.CreateSessionGoogle(ctx, sessionState.UserID, token.AccessToken, token.RefreshToken, sessionState.Scopes, token.Expiry, sessionState.Credentials)
+	_, err = c.store.CreateSessionGoogle(ctx, sessionState.UserID, token.AccessToken, token.RefreshToken, sessionState.Scopes, token.Expiry, sessionState.Credentials)
 	if err != nil {
 		return "", err
 	}
 	return sessionState.RedirectURL, nil
 }
 
-func (s *service) RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error {
+func (c *credentials) RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error {
 	if userID == "" {
 		return ErrInvalidInput
 	}
-	return s.store.RemoveSessionGoogle(ctx, userID, credentialsID)
+	return c.store.RemoveSessionGoogle(ctx, userID, credentialsID)
 }
 
-func (s *service) GetSessionsGoogleByUser(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
+func (c *credentials) GetSessionsGoogleByUser(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.store.GetSessionGoogleAll(ctx, userID)
+	return c.store.GetSessionGoogleAll(ctx, userID)
 }
