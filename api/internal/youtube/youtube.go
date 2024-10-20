@@ -2,11 +2,12 @@ package youtube
 
 import (
 	"context"
-	"io"
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/pb"
+	"github.com/pkulik0/autocc/api/internal/srt"
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
@@ -25,21 +26,23 @@ type Youtube interface {
 	// GetClosedCaptions returns a list of closed captions for a video.
 	GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error)
 	// DownloadClosedCaptions downloads closed captions for a video.
-	DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error)
+	DownloadClosedCaptions(ctx context.Context, userID, ccID string) (*srt.Srt, error)
 	// UploadClosedCaptions uploads closed captions for a video.
-	UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error)
+	UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error)
 }
 
 var _ Youtube = &youtube{}
 
 type youtube struct {
 	store store.Store
+	cache cache.Cache
 }
 
 // New creates a new YouTube service.
-func New(store store.Store) *youtube {
+func New(store store.Store, cache cache.Cache) *youtube {
 	log.Debug().Msg("created youtube service")
 	return &youtube{
 		store: store,
+		cache: cache,
 	}
 }

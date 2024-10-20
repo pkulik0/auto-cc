@@ -56,7 +56,7 @@ func main() {
 	}
 
 	translator := translation.New(store, cache)
-	youtube := youtube.New(store)
+	youtube := youtube.New(store, cache)
 	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
 
 	server := server.New(cache, credentials, auth, youtube, translator)

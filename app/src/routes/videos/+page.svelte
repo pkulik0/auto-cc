@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card, Button, Spinner } from 'flowbite-svelte';
-	import { getVideos } from '$lib/api';
+	import { getLanguages, getVideos, process } from '$lib/api';
 	import type { Video } from '$lib/pb/youtube';
 	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
@@ -92,11 +92,11 @@
 					</div>
 
 					<div class="mt-8 space-y-2">
-						<Button class="w-full" size="xs">
+						<Button on:click={() => process(video.id)} class="w-full" size="xs">
 							<CaptionOutline class="me-1 w-6" />
 							{$_('videos.closed_captions')}
 						</Button>
-						<Button class="w-full" outline size="xs">{$_('videos.metadata')}</Button>
+						<!-- <Button class="w-full" outline size="xs">{$_('videos.metadata')}</Button> -->
 					</div>
 				</Card>
 			</div>

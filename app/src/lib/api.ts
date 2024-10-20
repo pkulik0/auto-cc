@@ -301,6 +301,22 @@ export const uploadCC = async (videoId: string, langCode: string, srt: string): 
 	return resp.id;
 };
 
+export const process = async (videoId: string): Promise<void> => {
+    const u = await userManager.getUser();
+    if (!u) throw new Error('User not logged in');
+    const token = u.access_token;
+
+    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/process`), {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    if (!res.ok) {
+        throw new Error('Failed to process video');
+    }
+};
+
 export const getLanguages = async (): Promise<string[]> => {
     const u = await userManager.getUser();
 	if (!u) throw new Error('User not logged in');

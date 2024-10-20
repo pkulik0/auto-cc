@@ -2,11 +2,9 @@ package translation
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -67,21 +65,15 @@ func countTextLen(text []string) uint {
 	return count
 }
 
-func getCacheKey(sourceLanguage, targetLanguage string, text []string) string {
-	hash := sha256.New()
-	for _, t := range text {
-		hash.Write([]byte(t))
-	}
-	return strings.Join([]string{sourceLanguage, targetLanguage, string(hash.Sum(nil))}, ":")
-}
-
 func (t *translator) Translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
 	if len(text) == 0 || sourceLanguage == "" || targetLanguage == "" {
 		return nil, errs.InvalidInput
 	}
 
+	log.Debug().Strs("text", text).Str("source_language", sourceLanguage).Str("target_language", targetLanguage).Msg("translating text")
+
 	// Check if the translation is already in the cache.
-	key := getCacheKey(sourceLanguage, targetLanguage, text)
+	key := cache.CreateKey(append(text, sourceLanguage, targetLanguage)...)
 	if value, err := t.cache.GetList(ctx, key); err == nil {
 		return value, nil
 	}

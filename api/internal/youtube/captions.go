@@ -3,12 +3,17 @@ package youtube
 import (
 	"context"
 	"io"
+	"strings"
+	"time"
 
 	yt "google.golang.org/api/youtube/v3"
 
+	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/quota"
+	"github.com/pkulik0/autocc/api/internal/srt"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -41,32 +46,42 @@ func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string)
 	return captions, nil
 }
 
-func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error) {
+func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (*srt.Srt, error) {
 	if userID == "" || ccID == "" {
-		return "", errs.InvalidInput
+		return nil, errs.InvalidInput
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsDownload)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	resp, err := service.Captions.Download(ccID).Tfmt(captionsFormat).Download()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(body), nil
+
+	srt, err := srt.Parse(string(body))
+	if err != nil {
+		return nil, err
+	}
+	return srt, nil
 }
 
-func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error) {
+func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error) {
 	if userID == "" || videoID == "" || language == "" || srt == nil {
 		return "", errs.InvalidInput
+	}
+
+	key := cache.CreateKey(userID, videoID, language, srt.String())
+	if value, err := y.cache.Get(ctx, key); err == nil {
+		return value, nil
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsUpload)
@@ -78,9 +93,13 @@ func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, lan
 		Language: language,
 		Name:     language,
 		VideoId:  videoID,
-	}}).Media(srt).Do()
+	}}).Media(strings.NewReader(srt.String())).Do()
 	if err != nil {
 		return "", err
+	}
+
+	if err := y.cache.Set(ctx, key, resp.Id, time.Hour*24); err != nil {
+		log.Error().Err(err).Str("key", key).Msg("failed to set cache")
 	}
 	return resp.Id, nil
 }

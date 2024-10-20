@@ -36,24 +36,20 @@ func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) (
 		return nil, "", err
 	}
 
-	var videos []*pb.Video
-	for _, item := range resp.Items {
-		if item.Id.Kind != "youtube#video" {
-			continue
-		}
-
+	videos := make([]*pb.Video, len(resp.Items))
+	for i, item := range resp.Items {
 		publishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 		if err != nil {
 			continue
 		}
 
-		videos = append(videos, &pb.Video{
+		videos[i] = &pb.Video{
 			Id:           item.Id.VideoId,
 			Title:        item.Snippet.Title,
 			ThumbnailUrl: item.Snippet.Thumbnails.High.Url,
 			Description:  item.Snippet.Description,
 			PublishedAt:  &timestamppb.Timestamp{Seconds: publishedAt.Unix()},
-		})
+		}
 	}
 
 	return videos, resp.NextPageToken, nil

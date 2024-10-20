@@ -2,11 +2,22 @@ package cache
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
+
+// CreateKey creates a cache key from the given strings.
+func CreateKey(strs ...string) string {
+	hash := sha256.New()
+	for _, s := range strs {
+		hash.Write([]byte(s))
+	}
+	return hex.EncodeToString(hash.Sum(nil))
+}
 
 // Cache is the interface that wraps cache methods.
 //
