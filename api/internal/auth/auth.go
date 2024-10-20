@@ -2,8 +2,7 @@ package auth
 
 import (
 	"context"
-	"net/http"
-	"strings"
+	"errors"
 	"sync"
 	"time"
 
@@ -15,8 +14,8 @@ import (
 //
 //go:generate mockgen -destination=../mock/auth.go -package=mock . Auth
 type Auth interface {
-	// AuthMiddleware is a middleware that authenticates the user.
-	AuthMiddleware(next http.Handler) http.Handler
+	// Authenticate authenticates based on the access token.
+	Authenticate(ctx context.Context, accessToken string) (userID string, isSuperuser bool, err error)
 }
 
 var _ Auth = &keycloakAuth{}
@@ -106,16 +105,16 @@ func New(ctx context.Context, url, realm, clientID, clientSecret string) (*keycl
 }
 
 type (
-	userIdContextKey struct{}
-	userSuperuserKey struct{}
+	contextKeyUserID    struct{}
+	contextKeySuperuser struct{}
 )
 
 func UserFromContext(ctx context.Context) (userId string, isSuperuser bool, ok bool) {
-	userId, ok = ctx.Value(userIdContextKey{}).(string)
+	userId, ok = ctx.Value(contextKeyUserID{}).(string)
 	if !ok {
 		return "", false, false
 	}
-	isSuperuser, ok = ctx.Value(userSuperuserKey{}).(bool)
+	isSuperuser, ok = ctx.Value(contextKeySuperuser{}).(bool)
 	if !ok {
 		return "", false, false
 	}
@@ -123,8 +122,8 @@ func UserFromContext(ctx context.Context) (userId string, isSuperuser bool, ok b
 }
 
 func ContextWithUser(ctx context.Context, userId string, isSuperuser bool) context.Context {
-	ctx = context.WithValue(ctx, userIdContextKey{}, userId)
-	ctx = context.WithValue(ctx, userSuperuserKey{}, isSuperuser)
+	ctx = context.WithValue(ctx, contextKeyUserID{}, userId)
+	ctx = context.WithValue(ctx, contextKeySuperuser{}, isSuperuser)
 	return ctx
 }
 
@@ -132,54 +131,36 @@ const (
 	superusersGroup = "Superusers"
 )
 
-func (a *keycloakAuth) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessToken := r.Header.Get("Authorization")
-		if accessToken == "" || !strings.HasPrefix(accessToken, "Bearer ") {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+var (
+	ErrInvalidToken = errors.New("invalid token")
+)
 
-		accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+func (a *keycloakAuth) Authenticate(ctx context.Context, accessToken string) (string, bool, error) {
+	token, claims, err := a.client.DecodeAccessToken(ctx, accessToken, a.realm)
+	if err != nil {
+		return "", false, err
+	}
+	if !token.Valid {
+		return "", false, ErrInvalidToken
+	}
+	userId, err := claims.GetSubject()
+	if err != nil {
+		return "", false, ErrInvalidToken
+	}
 
-		token, claims, err := a.client.DecodeAccessToken(r.Context(), accessToken, a.realm)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to decode access token")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		if !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+	groups, err := a.client.GetUserGroups(ctx, a.token.AccessToken(), a.realm, userId, gocloak.GetGroupsParams{})
+	if err != nil {
+		return "", false, err
+	}
 
-		userId, err := claims.GetSubject()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get subject")
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		groups, err := a.client.GetUserGroups(r.Context(), a.token.AccessToken(), a.realm, userId, gocloak.GetGroupsParams{})
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get user groups")
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		isSuperuser := false
-		for _, group := range groups {
-			if group.Name == nil {
-				continue
-			}
-			if *group.Name != superusersGroup {
-				continue
-			}
+	isSuperuser := false
+	for _, group := range groups {
+		if group.Name != nil && *group.Name == superusersGroup {
 			isSuperuser = true
 			break
 		}
+	}
 
-		log.Debug().Str("user_id", userId).Bool("is_superuser", isSuperuser).Msg("authenticated")
-		next.ServeHTTP(w, r.WithContext(ContextWithUser(r.Context(), userId, isSuperuser)))
-	})
+	log.Debug().Str("user_id", userId).Bool("is_superuser", isSuperuser).Msg("authenticated")
+	return userId, isSuperuser, nil
 }

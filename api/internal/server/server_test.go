@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/pkulik0/autocc/api/internal/auth"
 	"github.com/pkulik0/autocc/api/internal/credentials"
+	"github.com/pkulik0/autocc/api/internal/middleware"
 	"github.com/pkulik0/autocc/api/internal/mock"
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/pb"
@@ -25,7 +27,7 @@ func TestHandlerRoot(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
-	s := New(nil, nil, nil, nil)
+	s := New(nil, nil, nil, nil, nil)
 	s.handlerRoot(w, r)
 
 	c.Assert(w.Code, qt.Equals, http.StatusOK)
@@ -104,7 +106,7 @@ func TestHandlerCredentials(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -195,7 +197,7 @@ func TestAddCredentialsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -285,7 +287,7 @@ func TestAddCredentialsDeepL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -351,7 +353,7 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -417,7 +419,7 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -520,7 +522,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -598,7 +600,7 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -684,7 +686,7 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -782,7 +784,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -802,7 +804,7 @@ func TestSuperuserMiddleware(t *testing.T) {
 				r := httptest.NewRequest("GET", "/", nil)
 				r = r.WithContext(auth.ContextWithUser(r.Context(), "userID", true))
 
-				superuserMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				middleware.Superuser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				})).ServeHTTP(w, r)
 
@@ -816,7 +818,7 @@ func TestSuperuserMiddleware(t *testing.T) {
 				r := httptest.NewRequest("GET", "/", nil)
 				r = r.WithContext(auth.ContextWithUser(r.Context(), "userID", false))
 
-				superuserMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				middleware.Superuser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				})).ServeHTTP(w, r)
 
@@ -829,7 +831,7 @@ func TestSuperuserMiddleware(t *testing.T) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("GET", "/", nil)
 
-				superuserMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				middleware.Superuser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				})).ServeHTTP(w, r)
 
@@ -1038,21 +1040,17 @@ func TestGetMux(t *testing.T) {
 		c.Run(tc.name, func(c *qt.C) {
 			ctrl := gomock.NewController(t)
 			a := mock.NewMockAuth(ctrl)
-			a.EXPECT().AuthMiddleware(gomock.Any()).DoAndReturn(func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if tc.hasUser {
-						r = r.WithContext(auth.ContextWithUser(r.Context(), "userID", tc.isSuperuser))
-						next.ServeHTTP(w, r)
-					} else {
-						http.Error(w, "Forbidden", http.StatusForbidden)
-					}
-				})
-			})
 
+			a.EXPECT().Authenticate(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, accessToken string) (string, bool, error) {
+				if tc.hasUser {
+					return "userID", tc.isSuperuser, nil
+				}
+				return "", false, errors.New("no user")
+			})
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMock(service)
 
-			s := New(service, a, nil, nil)
+			s := New(nil, service, a, nil, nil)
 			mux := s.getMux()
 
 			w := httptest.NewRecorder()

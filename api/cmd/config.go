@@ -3,13 +3,15 @@ package main
 import (
 	"os"
 
-	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/spf13/viper"
 )
 
 type config struct {
 	IsProduction bool   `mapstructure:"production"`
 	Port         uint16 `mapstructure:"port"`
+
+	RedisAddr string `mapstructure:"redis_addr"`
 
 	PostgresHost string `mapstructure:"postgres_host"`
 	PostgresPort uint16 `mapstructure:"postgres_port"`
@@ -30,6 +32,8 @@ const (
 
 	envProd = "PROD"
 	envPort = "PORT"
+
+	envRedisAddr = "REDIS_ADDR"
 
 	envPostgresHost = "POSTGRES_HOST"
 	envPostgresPort = "POSTGRES_PORT"
@@ -56,11 +60,6 @@ func bindEnvs(key ...string) error {
 }
 
 func parseConfig() (*config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
-
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix(envPrefix)
 
@@ -68,8 +67,9 @@ func parseConfig() (*config, error) {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
-	err = bindEnvs(
+	err := bindEnvs(
 		envPort, envPort,
+		envRedisAddr,
 		envPostgresHost, envPostgresPort, envPostgresUser, envPostgresPass, envPostgresDB,
 		envKeycloakURL, envKeycloakRealm, envKeycloakClientId, envKeycloakClientSecret,
 		envGoogleCallbackURL,
@@ -80,6 +80,8 @@ func parseConfig() (*config, error) {
 
 	viper.SetDefault(envProd, false)
 	viper.SetDefault(envPort, 8080)
+
+	viper.SetDefault(envRedisAddr, "localhost:6379")
 
 	viper.SetDefault(envPostgresHost, "postgres")
 	viper.SetDefault(envPostgresPort, 5432)

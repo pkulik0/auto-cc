@@ -300,7 +300,15 @@ export const uploadCC = async (videoId: string, langCode: string, srt: string): 
 };
 
 export const getLanguages = async (): Promise<string[]> => {
-	const res = await fetch(getApiUrl('/translation/languages'));
+    const u = await userManager.getUser();
+	if (!u) throw new Error('User not logged in');
+	const token = u.access_token;
+
+	const res = await fetch(getApiUrl('/translation/languages'), {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
 	if (!res.ok) {
 		throw new Error('Failed to get languages');
 	}

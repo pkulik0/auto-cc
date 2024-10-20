@@ -8,8 +8,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
@@ -76,7 +74,6 @@ func (c *deeplApiClient) getLanguages(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debug().Str("body", string(body)).Msg("fetched languages")
 
 	var data []struct {
 		Language string `json:"language"`
@@ -107,7 +104,6 @@ func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLan
 	if err != nil {
 		return nil, err
 	}
-	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Str("data", string(data)).Msg("translating")
 
 	resp, err := c.request(ctx, http.MethodPost, "translate", bytes.NewBuffer(data))
 	if err != nil {
@@ -123,8 +119,6 @@ func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLan
 		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
 	}
 
-	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Str("body", string(body)).Strs("text", text).Msg("translated")
-
 	var result struct {
 		Translations []struct {
 			DetectedSourceLanguage string `json:"detected_source_language"`
@@ -134,7 +128,6 @@ func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLan
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, err
 	}
-	log.Debug().Str("source", sourceLanguage).Str("target", targetLanguage).Interface("result", result).Msg("translated")
 
 	translations := make([]string, len(result.Translations))
 	for i, t := range result.Translations {

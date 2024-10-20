@@ -46,29 +46,23 @@ func New(ctx context.Context, addr string) (*redisCache, error) {
 func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 	value, err := c.client.Get(ctx, key).Result()
 	if err != nil {
-		log.Error().Err(err).Str("key", key).Msg("failed to get value from cache")
 		return "", err
 	}
-	log.Trace().Str("key", key).Str("value", value).Msg("got value from cache")
 	return value, nil
 }
 
 func (c *redisCache) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	err := c.client.Set(ctx, key, value, expiration).Err()
 	if err != nil {
-		log.Error().Err(err).Str("key", key).Str("value", value).Msg("failed to set value in cache")
 		return err
 	}
-	log.Trace().Str("key", key).Str("value", value).Msg("set value in cache")
 	return nil
 }
 
 func (c *redisCache) Del(ctx context.Context, key string) error {
 	err := c.client.Del(ctx, key).Err()
 	if err != nil {
-		log.Error().Err(err).Str("key", key).Msg("failed to delete value from cache")
 		return err
 	}
-	log.Trace().Str("key", key).Msg("deleted value from cache")
 	return nil
 }

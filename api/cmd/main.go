@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/server"
@@ -19,7 +20,7 @@ import (
 )
 
 func main() {
-	version.EnsureSet()
+	// version.EnsureSet()
 
 	c, err := parseConfig()
 	if err != nil {
@@ -52,7 +53,12 @@ func main() {
 	translator := translation.New(store)
 	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
 
-	server := server.New(credentials, auth, youtube.New(store), translator)
+	cache, err := cache.New(context.Background(), c.RedisAddr)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create cache")
+	}
+
+	server := server.New(cache, credentials, auth, youtube.New(store), translator)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")
