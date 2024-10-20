@@ -34,7 +34,7 @@
 
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (!videosNextPageToken || !videos) {
+				if (!videosNextPageToken || !videos || isLoading) {
 					return;
 				}
 

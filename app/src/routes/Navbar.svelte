@@ -26,6 +26,5 @@
 	<NavUl {activeUrl} class="order-1">
 		<NavLi href="/videos">{$_('nav.videos')}</NavLi>
 		<NavLi href="/credentials">{$_('nav.credentials')}</NavLi>
-		<NavLi href="/settings">{$_('nav.settings')}</NavLi>
 	</NavUl>
 </Navbar>
