@@ -11,18 +11,7 @@ import {
 	GetSessionGoogleURLResponse,
 	GetUserSessionsGoogleResponse
 } from './pb/credentials';
-import { GetLanguagesResponse, TranslateRequest, TranslateResponse } from './pb/translation';
-import {
-	ClosedCaptionsEntry,
-	DownloadClosedCaptionsResponse,
-	GetClosedCaptionsResponse,
-	GetMetadataResponse,
-	GetYoutubeVideosResponse,
-	Metadata,
-	UpdateMetadataRequest,
-	UploadClosedCaptionsRequest,
-	UploadClosedCaptionsResponse
-} from './pb/youtube';
+import { GetYoutubeVideosResponse } from './pb/youtube';
 
 const getApiUrl = (endpoint: string) => {
 	if (!endpoint.startsWith('/')) endpoint = '/' + endpoint;
@@ -194,174 +183,23 @@ export const getVideos = async (nextPageToken?: string): Promise<GetYoutubeVideo
 
 	const data = await res.arrayBuffer();
 	const resp = GetYoutubeVideosResponse.decode(new Uint8Array(data));
-    resp.videos = resp.videos.filter(v => !v.description.includes('#short'));
-    return resp;
-};
-
-export const getMetadata = async (videoId: string): Promise<GetMetadataResponse> => {
-	const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/metadata`), {
-		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	});
-	if (!res.ok) {
-		throw new Error('Failed to get metadata');
-	}
-
-	const data = await res.arrayBuffer();
-	return GetMetadataResponse.decode(new Uint8Array(data));
-};
-
-export const updateMetadata = async (
-	videoId: string,
-	metadata: { [langCode: string]: Metadata }
-): Promise<void> => {
-	const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/metadata`), {
-		method: 'PUT',
-		headers: {
-			Authorization: `Bearer ${token}`,
-			'Content-Type': 'application/octet-stream'
-		},
-		body: UpdateMetadataRequest.encode({ metadata: metadata }).finish()
-	});
-	if (!res.ok) {
-		throw new Error('Failed to update metadata');
-	}
-};
-
-export const getCC = async (videoId: string): Promise<ClosedCaptionsEntry[]> => {
-	const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/cc`), {
-		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	});
-	if (!res.ok) {
-		throw new Error('Failed to get CC');
-	}
-
-	const data = await res.arrayBuffer();
-	const resp = GetClosedCaptionsResponse.decode(new Uint8Array(data));
-	return resp.closedCaptions;
-};
-
-export const downloadCC = async (ccId: string): Promise<string> => {
-	const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl(`/youtube/cc/${ccId}`), {
-		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	});
-	if (!res.ok) {
-		throw new Error('Failed to download CC');
-	}
-
-	const data = await res.arrayBuffer();
-	const resp = DownloadClosedCaptionsResponse.decode(new Uint8Array(data));
-	return resp.srt;
-};
-
-export const uploadCC = async (videoId: string, langCode: string, srt: string): Promise<string> => {
-	const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/cc`), {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${token}`,
-			'Content-Type': 'application/octet-stream'
-		},
-		body: UploadClosedCaptionsRequest.encode({
-			videoId: videoId,
-			language: langCode,
-			srt: srt
-		}).finish()
-	});
-	if (!res.ok) {
-		throw new Error('Failed to upload CC');
-	}
-
-	const data = await res.arrayBuffer();
-	const resp = UploadClosedCaptionsResponse.decode(new Uint8Array(data));
-	return resp.id;
+	resp.videos = resp.videos.filter((v) => !v.description.includes('#short'));
+	return resp;
 };
 
 export const process = async (videoId: string): Promise<void> => {
-    const u = await userManager.getUser();
-    if (!u) throw new Error('User not logged in');
-    const token = u.access_token;
-
-    const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/process`), {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    });
-    if (!res.ok) {
-        throw new Error('Failed to process video');
-    }
-};
-
-export const getLanguages = async (): Promise<string[]> => {
-    const u = await userManager.getUser();
-	if (!u) throw new Error('User not logged in');
-	const token = u.access_token;
-
-	const res = await fetch(getApiUrl('/translation/languages'), {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    });
-	if (!res.ok) {
-		throw new Error('Failed to get languages');
-	}
-
-	const data = await res.arrayBuffer();
-	const resp = GetLanguagesResponse.decode(new Uint8Array(data));
-	return resp.languages;
-};
-
-export const translate = async (
-	text: string[],
-	sourceLanguage: string,
-	targetLanguage: string
-): Promise<string[]> => {
 	const u = await userManager.getUser();
 	if (!u) throw new Error('User not logged in');
 	const token = u.access_token;
 
-	const res = await fetch(getApiUrl(`/translation/translate`), {
+	const res = await fetch(getApiUrl(`/youtube/videos/${videoId}/process`), {
 		method: 'POST',
 		headers: {
-			Authorization: `Bearer ${token}`,
-			'Content-Type': 'application/octet-stream'
-		},
-		body: TranslateRequest.encode({
-			text: text,
-			sourceLanguage: sourceLanguage,
-			targetLanguage: targetLanguage
-		}).finish()
+			Authorization: `Bearer ${token}`
+		}
 	});
 	if (!res.ok) {
-		throw new Error('Failed to translate');
+		throw new Error('Failed to process video');
 	}
-
-	const data = await res.arrayBuffer();
-	const resp = TranslateResponse.decode(new Uint8Array(data));
-	return resp.text;
 };
+

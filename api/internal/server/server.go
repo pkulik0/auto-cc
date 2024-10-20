@@ -18,8 +18,6 @@ import (
 	"github.com/pkulik0/autocc/api/internal/helpers"
 	"github.com/pkulik0/autocc/api/internal/middleware"
 	"github.com/pkulik0/autocc/api/internal/pb"
-	"github.com/pkulik0/autocc/api/internal/srt"
-	"github.com/pkulik0/autocc/api/internal/translation"
 	"github.com/pkulik0/autocc/api/internal/version"
 	"github.com/pkulik0/autocc/api/internal/youtube"
 )
@@ -29,17 +27,15 @@ type server struct {
 	credentials credentials.Credentials
 	auth        auth.Auth
 	youtube     youtube.Youtube
-	translator  translation.Translator
 	autocc      autocc.AutoCC
 }
 
-func New(cache cache.Cache, credentials credentials.Credentials, auth auth.Auth, youtube youtube.Youtube, translator translation.Translator, autocc autocc.AutoCC) *server {
+func New(cache cache.Cache, credentials credentials.Credentials, auth auth.Auth, youtube youtube.Youtube, autocc autocc.AutoCC) *server {
 	return &server{
 		cache:       cache,
 		credentials: credentials,
 		auth:        auth,
 		youtube:     youtube,
-		translator:  translator,
 		autocc:      autocc,
 	}
 }
@@ -297,189 +293,6 @@ func (s *server) handlerYoutubeVideos(w http.ResponseWriter, r *http.Request) {
 	helpers.WritePb(w, &resp)
 }
 
-func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) {
-	userID, _, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		helpers.ErrLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
-		return
-	}
-
-	id := r.PathValue("id")
-
-	metadata, err := s.youtube.GetMetadata(r.Context(), userID, id)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	case errs.NotFound:
-		helpers.ErrLog(w, err, "video not found", http.StatusNotFound)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to get video metadata", http.StatusInternalServerError)
-	}
-
-	var resp pb.GetMetadataResponse
-	resp.Metadata = metadata
-
-	helpers.WritePb(w, &resp)
-}
-
-func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Request) {
-	userID, _, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		helpers.ErrLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
-		return
-	}
-
-	id := r.PathValue("id")
-
-	var req pb.UpdateMetadataRequest
-	err := helpers.ReadPb(r, &req)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to decode request", http.StatusBadRequest)
-		return
-	}
-
-	err = s.youtube.UpdateMetadata(r.Context(), userID, id, req.Metadata)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to update video metadata", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (s *server) handlerYoutubeCC(w http.ResponseWriter, r *http.Request) {
-	userID, _, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		helpers.ErrLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
-		return
-	}
-
-	id := r.PathValue("id")
-
-	cc, err := s.youtube.GetClosedCaptions(r.Context(), userID, id)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to get video cc", http.StatusInternalServerError)
-	}
-
-	var resp pb.GetClosedCaptionsResponse
-	resp.ClosedCaptions = cc
-
-	helpers.WritePb(w, &resp)
-}
-
-func (s *server) handlerYoutubeUploadCC(w http.ResponseWriter, r *http.Request) {
-	userID, _, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		helpers.ErrLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
-		return
-	}
-
-	var req pb.UploadClosedCaptionsRequest
-	err := helpers.ReadPb(r, &req)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to decode request", http.StatusBadRequest)
-		return
-	}
-
-	srt, err := srt.Parse(req.Srt)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to parse srt", http.StatusBadRequest)
-		return
-	}
-
-	ccID, err := s.youtube.UploadClosedCaptions(r.Context(), userID, req.VideoId, req.Language, srt)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to upload video cc", http.StatusInternalServerError)
-		return
-	}
-
-	var resp pb.UploadClosedCaptionsResponse
-	resp.Id = ccID
-
-	helpers.WritePb(w, &resp)
-}
-
-func (s *server) handlerYoutubeDownloadCC(w http.ResponseWriter, r *http.Request) {
-	userID, _, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		helpers.ErrLog(w, nil, "failed to get user from context", http.StatusInternalServerError)
-		return
-	}
-
-	id := r.PathValue("id")
-
-	srt, err := s.youtube.DownloadClosedCaptions(r.Context(), userID, id)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to download video cc", http.StatusInternalServerError)
-	}
-
-	var resp pb.DownloadClosedCaptionsResponse
-	resp.Srt = srt.String()
-
-	helpers.WritePb(w, &resp)
-}
-
-func (s *server) handlerTranslatorLanguages(w http.ResponseWriter, r *http.Request) {
-	languages, err := s.translator.GetLanguages(r.Context())
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to get languages", http.StatusInternalServerError)
-		return
-	}
-
-	var resp pb.GetLanguagesResponse
-	resp.Languages = languages
-
-	helpers.WritePb(w, &resp)
-}
-
-func (s *server) handlerTranslatorTranslate(w http.ResponseWriter, r *http.Request) {
-	var req pb.TranslateRequest
-	err := helpers.ReadPb(r, &req)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to decode request", http.StatusBadRequest)
-		return
-	}
-
-	text, err := s.translator.Translate(r.Context(), req.Text, req.SourceLanguage, req.TargetLanguage)
-	switch err {
-	case nil:
-	case errs.InvalidInput:
-		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
-		return
-	default:
-		helpers.ErrLog(w, err, "failed to translate text", http.StatusInternalServerError)
-		return
-	}
-
-	var resp pb.TranslateResponse
-	resp.Text = text
-
-	helpers.WritePb(w, &resp)
-}
-
 func (s *server) handlerProcess(w http.ResponseWriter, r *http.Request) {
 	userID, _, ok := auth.UserFromContext(r.Context())
 	if !ok {
@@ -519,16 +332,7 @@ func (s *server) getMux() *http.ServeMux {
 
 	ytMux := http.NewServeMux()
 	ytMux.HandleFunc("GET /videos", s.handlerYoutubeVideos)
-	ytMux.HandleFunc("GET /videos/{id}/metadata", s.handlerYoutubeMetadata)
-	ytMux.HandleFunc("PUT /videos/{id}/metadata", s.handlerYoutubeUpdateMetadata)
-	ytMux.HandleFunc("POST /videos/{id}/process", s.handlerProcess)
-	ytMux.HandleFunc("GET /videos/{id}/cc", s.handlerYoutubeCC)
-	ytMux.HandleFunc("POST /videos/{id}/cc", s.handlerYoutubeUploadCC)
-	ytMux.HandleFunc("GET /cc/{id}", s.handlerYoutubeDownloadCC)
-
-	translationMux := http.NewServeMux()
-	translationMux.HandleFunc("POST /translate", s.handlerTranslatorTranslate)
-	translationMux.HandleFunc("GET /languages", s.handlerTranslatorLanguages)
+	ytMux.HandleFunc("POST /videos/{id}", s.handlerProcess)
 
 	authMux := http.NewServeMux()
 	authMux.Handle("/", middleware.Superuser(superuserMux))
@@ -537,7 +341,6 @@ func (s *server) getMux() *http.ServeMux {
 	authMux.HandleFunc("GET /sessions/google/{id}", s.handlerSessionGoogleURL)
 	authMux.HandleFunc("DELETE /sessions/google/{id}", s.handlerRemoveSessionGoogle)
 	authMux.Handle("/youtube/", http.StripPrefix("/youtube", ytMux))
-	authMux.Handle("/translation/", http.StripPrefix("/translation", translationMux))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)

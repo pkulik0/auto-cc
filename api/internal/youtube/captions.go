@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/errs"
-	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/quota"
 	"github.com/pkulik0/autocc/api/internal/srt"
 	"github.com/rs/zerolog/log"
@@ -20,7 +19,12 @@ const (
 	captionsFormat = "srt"
 )
 
-func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error) {
+type CC struct {
+	Id       string
+	Language string
+}
+
+func (y *youtube) GetCC(ctx context.Context, userID, videoID string) ([]*CC, error) {
 	if userID == "" || videoID == "" {
 		return nil, errs.InvalidInput
 	}
@@ -35,9 +39,9 @@ func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string)
 		return nil, err
 	}
 
-	var captions []*pb.ClosedCaptionsEntry
+	var captions []*CC
 	for _, item := range resp.Items {
-		captions = append(captions, &pb.ClosedCaptionsEntry{
+		captions = append(captions, &CC{
 			Id:       item.Id,
 			Language: item.Snippet.Language,
 		})
@@ -46,7 +50,7 @@ func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string)
 	return captions, nil
 }
 
-func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (*srt.Srt, error) {
+func (y *youtube) DownloadCC(ctx context.Context, userID, ccID string) (*srt.Srt, error) {
 	if userID == "" || ccID == "" {
 		return nil, errs.InvalidInput
 	}
@@ -74,7 +78,7 @@ func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID strin
 	return srt, nil
 }
 
-func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error) {
+func (y *youtube) UploadCC(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error) {
 	if userID == "" || videoID == "" || language == "" || srt == nil {
 		return "", errs.InvalidInput
 	}

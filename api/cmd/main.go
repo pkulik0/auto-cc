@@ -62,7 +62,7 @@ func main() {
 
 	autocc := autocc.New(translator, youtube)
 
-	server := server.New(cache, credentials, auth, youtube, translator, autocc)
+	server := server.New(cache, credentials, auth, youtube, autocc)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

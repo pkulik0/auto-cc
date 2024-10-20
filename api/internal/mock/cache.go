@@ -70,6 +70,21 @@ func (mr *MockCacheMockRecorder) Get(ctx, key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCache)(nil).Get), ctx, key)
 }
 
+// GetList mocks base method.
+func (m *MockCache) GetList(ctx context.Context, key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetList", ctx, key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetList indicates an expected call of GetList.
+func (mr *MockCacheMockRecorder) GetList(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockCache)(nil).GetList), ctx, key)
+}
+
 // Set mocks base method.
 func (m *MockCache) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	m.ctrl.T.Helper()
@@ -82,4 +97,18 @@ func (m *MockCache) Set(ctx context.Context, key, value string, expiration time.
 func (mr *MockCacheMockRecorder) Set(ctx, key, value, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCache)(nil).Set), ctx, key, value, expiration)
+}
+
+// SetList mocks base method.
+func (m *MockCache) SetList(ctx context.Context, key string, value []string, expiration time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetList", ctx, key, value, expiration)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetList indicates an expected call of SetList.
+func (mr *MockCacheMockRecorder) SetList(ctx, key, value, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetList", reflect.TypeOf((*MockCache)(nil).SetList), ctx, key, value, expiration)
 }

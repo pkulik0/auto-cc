@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package pb;
-
-message CacheEntry {
-    bytes data = 1;
-    int32 status_code = 2;
-}

@@ -6,11 +6,16 @@ import (
 	yt "google.golang.org/api/youtube/v3"
 
 	"github.com/pkulik0/autocc/api/internal/errs"
-	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/quota"
 )
 
-func (y *youtube) GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error) {
+type Metadata struct {
+	Title       string
+	Description string
+	Language    string
+}
+
+func (y *youtube) GetMetadata(ctx context.Context, userID, videoID string) (*Metadata, error) {
 	if userID == "" || videoID == "" {
 		return nil, errs.InvalidInput
 	}
@@ -29,14 +34,14 @@ func (y *youtube) GetMetadata(ctx context.Context, userID, videoID string) (*pb.
 	}
 
 	metadata := resp.Items[0].Snippet
-	return &pb.Metadata{
+	return &Metadata{
 		Title:       metadata.Title,
 		Description: metadata.Description,
 		Language:    metadata.DefaultLanguage,
 	}, nil
 }
 
-func (y *youtube) UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error {
+func (y *youtube) UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*Metadata) error {
 	if userID == "" || videoID == "" || len(metadata) == 0 {
 		return errs.InvalidInput
 	}

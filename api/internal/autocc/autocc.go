@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/pkulik0/autocc/api/internal/errs"
-	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/translation"
 	"github.com/pkulik0/autocc/api/internal/youtube"
 	"github.com/rs/zerolog/log"
@@ -48,12 +47,12 @@ func (a *autoCC) Process(ctx context.Context, userID, videoID string) error {
 		return err
 	}
 
-	allCC, err := a.youtube.GetClosedCaptions(ctx, userID, videoID)
+	allCC, err := a.youtube.GetCC(ctx, userID, videoID)
 	if err != nil {
 		return err
 	}
 
-	var srcCC *pb.ClosedCaptionsEntry
+	var srcCC *youtube.CC
 	for _, cc := range allCC {
 		if cc.Language == metadata.Language {
 			srcCC = cc
@@ -64,13 +63,13 @@ func (a *autoCC) Process(ctx context.Context, userID, videoID string) error {
 		return errs.SourceClosedCaptionsNotFound
 	}
 
-	srt, err := a.youtube.DownloadClosedCaptions(ctx, userID, srcCC.Id)
+	srt, err := a.youtube.DownloadCC(ctx, userID, srcCC.Id)
 	if err != nil {
 		return err
 	}
 
 	errChan := make(chan error)
-	metadataChan := make(chan *pb.Metadata, len(languages))
+	metadataChan := make(chan *youtube.Metadata, len(languages))
 	waitGroupMetadata := sync.WaitGroup{}
 	waitGroupCC := sync.WaitGroup{}
 
@@ -102,7 +101,7 @@ func (a *autoCC) Process(ctx context.Context, userID, videoID string) error {
 				return
 			}
 
-			_, err = a.youtube.UploadClosedCaptions(ctx, userID, videoID, translation.CodeTranslationToGoogle(targetLang), translatedSrt)
+			_, err = a.youtube.UploadCC(ctx, userID, videoID, translation.CodeTranslationToGoogle(targetLang), translatedSrt)
 			if err != nil {
 				log.Error().Err(err).Str("src_lang", srcLang).Str("target_lang", targetLang).Msg("failed to upload cc")
 				errChan <- err
@@ -131,7 +130,7 @@ func (a *autoCC) Process(ctx context.Context, userID, videoID string) error {
 			title := text[0]
 			description := text[1]
 
-			metadataChan <- &pb.Metadata{
+			metadataChan <- &youtube.Metadata{
 				Title:       title,
 				Description: description,
 				Language:    translation.CodeTranslationToGoogle(targetLang),
@@ -147,7 +146,7 @@ func (a *autoCC) Process(ctx context.Context, userID, videoID string) error {
 		return err
 	}
 
-	metadataMap := make(map[string]*pb.Metadata)
+	metadataMap := make(map[string]*youtube.Metadata)
 	for m := range metadataChan {
 		metadataMap[m.Language] = m
 	}

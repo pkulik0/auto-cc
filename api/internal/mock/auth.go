@@ -41,9 +41,9 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 }
 
 // Authenticate mocks base method.
-func (m *MockAuth) Authenticate(ctx context.Context, token string) (string, bool, error) {
+func (m *MockAuth) Authenticate(ctx context.Context, accessToken string) (string, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Authenticate", ctx, token)
+	ret := m.ctrl.Call(m, "Authenticate", ctx, accessToken)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
@@ -51,7 +51,7 @@ func (m *MockAuth) Authenticate(ctx context.Context, token string) (string, bool
 }
 
 // Authenticate indicates an expected call of Authenticate.
-func (mr *MockAuthMockRecorder) Authenticate(ctx, token any) *gomock.Call {
+func (mr *MockAuthMockRecorder) Authenticate(ctx, accessToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockAuth)(nil).Authenticate), ctx, token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockAuth)(nil).Authenticate), ctx, accessToken)
 }

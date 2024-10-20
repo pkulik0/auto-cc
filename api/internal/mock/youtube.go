@@ -11,10 +11,11 @@ package mock
 
 import (
 	context "context"
-	io "io"
 	reflect "reflect"
 
 	pb "github.com/pkulik0/autocc/api/internal/pb"
+	srt "github.com/pkulik0/autocc/api/internal/srt"
+	youtube "github.com/pkulik0/autocc/api/internal/youtube"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,41 +43,41 @@ func (m *MockYoutube) EXPECT() *MockYoutubeMockRecorder {
 	return m.recorder
 }
 
-// DownloadClosedCaptions mocks base method.
-func (m *MockYoutube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error) {
+// DownloadCC mocks base method.
+func (m *MockYoutube) DownloadCC(ctx context.Context, userID, ccID string) (*srt.Srt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DownloadClosedCaptions", ctx, userID, ccID)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "DownloadCC", ctx, userID, ccID)
+	ret0, _ := ret[0].(*srt.Srt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DownloadClosedCaptions indicates an expected call of DownloadClosedCaptions.
-func (mr *MockYoutubeMockRecorder) DownloadClosedCaptions(ctx, userID, ccID any) *gomock.Call {
+// DownloadCC indicates an expected call of DownloadCC.
+func (mr *MockYoutubeMockRecorder) DownloadCC(ctx, userID, ccID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadClosedCaptions", reflect.TypeOf((*MockYoutube)(nil).DownloadClosedCaptions), ctx, userID, ccID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadCC", reflect.TypeOf((*MockYoutube)(nil).DownloadCC), ctx, userID, ccID)
 }
 
-// GetClosedCaptions mocks base method.
-func (m *MockYoutube) GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error) {
+// GetCC mocks base method.
+func (m *MockYoutube) GetCC(ctx context.Context, userID, videoID string) ([]*youtube.CC, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClosedCaptions", ctx, userID, videoID)
-	ret0, _ := ret[0].([]*pb.ClosedCaptionsEntry)
+	ret := m.ctrl.Call(m, "GetCC", ctx, userID, videoID)
+	ret0, _ := ret[0].([]*youtube.CC)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetClosedCaptions indicates an expected call of GetClosedCaptions.
-func (mr *MockYoutubeMockRecorder) GetClosedCaptions(ctx, userID, videoID any) *gomock.Call {
+// GetCC indicates an expected call of GetCC.
+func (mr *MockYoutubeMockRecorder) GetCC(ctx, userID, videoID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClosedCaptions", reflect.TypeOf((*MockYoutube)(nil).GetClosedCaptions), ctx, userID, videoID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCC", reflect.TypeOf((*MockYoutube)(nil).GetCC), ctx, userID, videoID)
 }
 
 // GetMetadata mocks base method.
-func (m *MockYoutube) GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error) {
+func (m *MockYoutube) GetMetadata(ctx context.Context, userID, videoID string) (*youtube.Metadata, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetadata", ctx, userID, videoID)
-	ret0, _ := ret[0].(*pb.Metadata)
+	ret0, _ := ret[0].(*youtube.Metadata)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -104,7 +105,7 @@ func (mr *MockYoutubeMockRecorder) GetVideos(ctx, userID, nextPageToken any) *go
 }
 
 // UpdateMetadata mocks base method.
-func (m *MockYoutube) UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error {
+func (m *MockYoutube) UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*youtube.Metadata) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateMetadata", ctx, userID, videoID, metadata)
 	ret0, _ := ret[0].(error)
@@ -117,17 +118,17 @@ func (mr *MockYoutubeMockRecorder) UpdateMetadata(ctx, userID, videoID, metadata
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetadata", reflect.TypeOf((*MockYoutube)(nil).UpdateMetadata), ctx, userID, videoID, metadata)
 }
 
-// UploadClosedCaptions mocks base method.
-func (m *MockYoutube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error) {
+// UploadCC mocks base method.
+func (m *MockYoutube) UploadCC(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadClosedCaptions", ctx, userID, videoID, language, srt)
+	ret := m.ctrl.Call(m, "UploadCC", ctx, userID, videoID, language, srt)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadClosedCaptions indicates an expected call of UploadClosedCaptions.
-func (mr *MockYoutubeMockRecorder) UploadClosedCaptions(ctx, userID, videoID, language, srt any) *gomock.Call {
+// UploadCC indicates an expected call of UploadCC.
+func (mr *MockYoutubeMockRecorder) UploadCC(ctx, userID, videoID, language, srt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadClosedCaptions", reflect.TypeOf((*MockYoutube)(nil).UploadClosedCaptions), ctx, userID, videoID, language, srt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadCC", reflect.TypeOf((*MockYoutube)(nil).UploadCC), ctx, userID, videoID, language, srt)
 }

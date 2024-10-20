@@ -19,16 +19,16 @@ type Youtube interface {
 	GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error)
 
 	// GetMetadata returns metadata for a video.
-	GetMetadata(ctx context.Context, userID, videoID string) (*pb.Metadata, error)
+	GetMetadata(ctx context.Context, userID, videoID string) (*Metadata, error)
 	// UpdateMetadata updates metadata for a video for each language.
-	UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*pb.Metadata) error
+	UpdateMetadata(ctx context.Context, userID, videoID string, metadata map[string]*Metadata) error
 
-	// GetClosedCaptions returns a list of closed captions for a video.
-	GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error)
-	// DownloadClosedCaptions downloads closed captions for a video.
-	DownloadClosedCaptions(ctx context.Context, userID, ccID string) (*srt.Srt, error)
-	// UploadClosedCaptions uploads closed captions for a video.
-	UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error)
+	// GetCC returns a list of closed captions for a video.
+	GetCC(ctx context.Context, userID, videoID string) ([]*CC, error)
+	// DownloadCC downloads closed captions for a video.
+	DownloadCC(ctx context.Context, userID, ccID string) (*srt.Srt, error)
+	// UploadCC uploads closed captions for a video.
+	UploadCC(ctx context.Context, userID, videoID, language string, srt *srt.Srt) (string, error)
 }
 
 var _ Youtube = &youtube{}
