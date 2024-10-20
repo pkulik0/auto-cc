@@ -103,14 +103,16 @@ func (s *Srt) Text() []string {
 }
 
 // ReplaceText replaces the text of the subtitles.
-func (s *Srt) ReplaceText(text []string) {
+func (s *Srt) ReplaceText(text []string) error {
 	if len(text) != len(s.Lines) {
-		return
+		return fmt.Errorf("invalid text length: %d, expected: %d", len(text), len(s.Lines))
 	}
 
 	for i := range s.Lines {
 		s.Lines[i].Text = text[i]
 	}
+
+	return nil
 }
 
 // Clone creates a deep copy of the SRT instance.

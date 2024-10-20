@@ -27,7 +27,7 @@ func TestHandlerRoot(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 
-	s := New(nil, nil, nil, nil, nil)
+	s := New(nil, nil, nil, nil, nil, nil)
 	s.handlerRoot(w, r)
 
 	c.Assert(w.Code, qt.Equals, http.StatusOK)
@@ -106,7 +106,7 @@ func TestHandlerCredentials(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -197,7 +197,7 @@ func TestAddCredentialsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -287,7 +287,7 @@ func TestAddCredentialsDeepL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -353,7 +353,7 @@ func TestRemoveCredentialsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -419,7 +419,7 @@ func TestRemoveCredentialsDeepL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -522,7 +522,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -600,7 +600,7 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -686,7 +686,7 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -784,7 +784,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMocks(service)
 
-			s := New(nil, service, nil, nil, nil)
+			s := New(nil, service, nil, nil, nil, nil)
 			tc.test(c, s)
 		})
 	}
@@ -1050,7 +1050,7 @@ func TestGetMux(t *testing.T) {
 			service := mock.NewMockCredentials(ctrl)
 			tc.setupMock(service)
 
-			s := New(nil, service, a, nil, nil)
+			s := New(nil, service, a, nil, nil, nil)
 			mux := s.getMux()
 
 			w := httptest.NewRecorder()

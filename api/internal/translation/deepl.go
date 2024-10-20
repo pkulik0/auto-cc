@@ -63,6 +63,11 @@ func (c *deeplApiClient) request(ctx context.Context, method, path string, body 
 	return c.client.Do(req)
 }
 
+type languageResponse struct {
+	Language string `json:"language"`
+	Name     string `json:"name"`
+}
+
 func (c *deeplApiClient) getLanguages(ctx context.Context) ([]string, error) {
 	resp, err := c.request(ctx, http.MethodGet, "languages", nil)
 	if err != nil {
@@ -75,10 +80,7 @@ func (c *deeplApiClient) getLanguages(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
-	var data []struct {
-		Language string `json:"language"`
-		Name     string `json:"name"`
-	}
+	var data []languageResponse
 	if err := json.Unmarshal(body, &data); err != nil {
 		return nil, err
 	}
@@ -91,12 +93,21 @@ func (c *deeplApiClient) getLanguages(ctx context.Context) ([]string, error) {
 	return languages, nil
 }
 
+type translateRequest struct {
+	Text           []string `json:"text"`
+	SourceLanguage string   `json:"source_lang"`
+	TargetLanguage string   `json:"target_lang"`
+}
+
+type translateResponse struct {
+	Translations []struct {
+		DetectedSourceLanguage string `json:"detected_source_language"`
+		Text                   string `json:"text"`
+	} `json:"translations"`
+}
+
 func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
-	data, err := json.Marshal(struct {
-		Text           []string `json:"text"`
-		SourceLanguage string   `json:"source_lang"`
-		TargetLanguage string   `json:"target_lang"`
-	}{
+	data, err := json.Marshal(&translateRequest{
 		Text:           text,
 		SourceLanguage: sourceLanguage,
 		TargetLanguage: targetLanguage,
@@ -119,12 +130,7 @@ func (c *deeplApiClient) translate(ctx context.Context, text []string, sourceLan
 		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
 	}
 
-	var result struct {
-		Translations []struct {
-			DetectedSourceLanguage string `json:"detected_source_language"`
-			Text                   string `json:"text"`
-		} `json:"translations"`
-	}
+	result := &translateResponse{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, err
 	}

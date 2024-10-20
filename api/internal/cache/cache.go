@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
@@ -67,6 +68,14 @@ func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 }
 
 func (c *redisCache) GetList(ctx context.Context, key string) ([]string, error) {
+	exists, err := c.client.Exists(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+	if exists == 0 {
+		return nil, errs.NotFound
+	}
+
 	value, err := c.client.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
 		return nil, err

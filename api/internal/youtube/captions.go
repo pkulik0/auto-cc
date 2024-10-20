@@ -89,17 +89,26 @@ func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, lan
 		return "", err
 	}
 
+	log.Trace().Str("video_id", videoID).Str("language", language).Msg("uploading closed captions")
 	resp, err := service.Captions.Insert([]string{"snippet"}, &yt.Caption{Snippet: &yt.CaptionSnippet{
-		Language: language,
-		Name:     language,
-		VideoId:  videoID,
+		Language:        language,
+		VideoId:         videoID,
+		Name:            "",
+		ForceSendFields: []string{"Name"}, // If not set `omitempty` kicks in and the required field is not sent.
 	}}).Media(strings.NewReader(srt.String())).Do()
 	if err != nil {
 		return "", err
 	}
 
-	if err := y.cache.Set(ctx, key, resp.Id, time.Hour*24); err != nil {
-		log.Error().Err(err).Str("key", key).Msg("failed to set cache")
-	}
+	go func() {
+		log.Trace().Str("key", key).Str("id", resp.Id).Msg("setting cache")
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		if err := y.cache.Set(ctx, key, resp.Id, time.Hour*24); err != nil {
+			log.Error().Err(err).Str("key", key).Msg("failed to set cache")
+		}
+	}()
 	return resp.Id, nil
 }

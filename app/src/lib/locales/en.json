@@ -22,8 +22,8 @@
         "revoke": "Revoke"
 	},
 	"videos": {
-		"closed_captions": "Closed Captions",
-		"metadata": "Metadata",
+		"translate": "Translate",
+		"processing": "Processing",
 		"no_description": "No description",
 		"no_videos": "Upload some videos to get started"
 	}

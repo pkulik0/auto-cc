@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/autocc"
 	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/errs"
@@ -30,15 +30,17 @@ type server struct {
 	auth        auth.Auth
 	youtube     youtube.Youtube
 	translator  translation.Translator
+	autocc      autocc.AutoCC
 }
 
-func New(cache cache.Cache, credentials credentials.Credentials, auth auth.Auth, youtube youtube.Youtube, translator translation.Translator) *server {
+func New(cache cache.Cache, credentials credentials.Credentials, auth auth.Auth, youtube youtube.Youtube, translator translation.Translator, autocc autocc.AutoCC) *server {
 	return &server{
 		cache:       cache,
 		credentials: credentials,
 		auth:        auth,
 		youtube:     youtube,
 		translator:  translator,
+		autocc:      autocc,
 	}
 }
 
@@ -487,124 +489,25 @@ func (s *server) handlerProcess(w http.ResponseWriter, r *http.Request) {
 
 	videoID := r.PathValue("id")
 
-	languages, err := s.translator.GetLanguages(r.Context())
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to get languages", http.StatusInternalServerError)
+	err := s.autocc.Process(r.Context(), userID, videoID)
+	switch err {
+	case nil:
+	case errs.InvalidInput:
+		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
+		return
+	case errs.SourceClosedCaptionsNotFound:
+		helpers.ErrLog(w, err, "source closed captions not found", http.StatusNotFound)
+		return
+	case errs.NotFound:
+		helpers.ErrLog(w, err, "not found", http.StatusNotFound)
+		return
+	default:
+		helpers.ErrLog(w, err, "failed to process video", http.StatusInternalServerError)
 		return
 	}
 
-	metadata, err := s.youtube.GetMetadata(r.Context(), userID, videoID)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to get video metadata", http.StatusInternalServerError)
-		return
-	}
-
-	allCC, err := s.youtube.GetClosedCaptions(r.Context(), userID, videoID)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to get video captions", http.StatusInternalServerError)
-		return
-	}
-
-	var srcCC *pb.ClosedCaptionsEntry
-	for _, cc := range allCC {
-		if cc.Language == metadata.Language {
-			srcCC = cc
-			break
-		}
-	}
-	if srcCC == nil {
-		log.Error().Str("video_id", videoID).Str("language", metadata.Language).Msg("source language cc not found")
-		return
-	}
-
-	srt, err := s.youtube.DownloadClosedCaptions(r.Context(), userID, srcCC.Id)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to download video captions", http.StatusInternalServerError)
-		return
-	}
-
-	errChan := make(chan error)
-	metadataChan := make(chan *pb.Metadata, len(languages))
-	waitGroupMetadata := sync.WaitGroup{}
-	waitGroupCC := sync.WaitGroup{}
-
-	for _, targetLang := range languages {
-		srcLang := translation.CodeGoogleToTranslation(metadata.Language)
-		if targetLang == srcLang {
-			continue
-		}
-
-		waitGroupCC.Add(1)
-		go func() {
-			defer waitGroupCC.Done()
-
-			text, err := s.translator.Translate(r.Context(), srt.Text(), srcLang, targetLang)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			translatedSrt := srt.Clone()
-			translatedSrt.ReplaceText(text)
-
-			_, err = s.youtube.UploadClosedCaptions(r.Context(), userID, videoID, translation.CodeTranslationToGoogle(targetLang), translatedSrt)
-			if err != nil {
-				errChan <- err
-			}
-		}()
-
-		waitGroupMetadata.Add(1)
-		go func() {
-			defer waitGroupMetadata.Done()
-			text, err := s.translator.Translate(r.Context(), []string{metadata.Title, metadata.Description}, srcLang, targetLang)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			if len(text) != 2 {
-				errChan <- fmt.Errorf("invalid translation response")
-				return
-			}
-
-			title := text[0]
-			description := text[1]
-
-			metadataChan <- &pb.Metadata{
-				Title:       title,
-				Description: description,
-				Language:    translation.CodeTranslationToGoogle(targetLang),
-			}
-		}()
-	}
-
-	waitGroupMetadata.Wait()
-	close(metadataChan)
-
-	if len(errChan) > 0 {
-		err := <-errChan
-		helpers.ErrLog(w, err, "failed to translate metadata", http.StatusInternalServerError)
-		return
-	}
-
-	metadataMap := make(map[string]*pb.Metadata)
-	for m := range metadataChan {
-		metadataMap[m.Language] = m
-	}
-
-	err = s.youtube.UpdateMetadata(r.Context(), userID, videoID, metadataMap)
-	if err != nil {
-		helpers.ErrLog(w, err, "failed to update video metadata", http.StatusInternalServerError)
-		return
-	}
-
-	waitGroupCC.Wait()
-	if len(errChan) > 0 {
-		err := <-errChan
-		helpers.ErrLog(w, err, "failed to translate captions", http.StatusInternalServerError)
-		return
-	}
-
+	log.Info().Str("video_id", videoID).Msg("finished processing video")
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *server) getMux() *http.ServeMux {
@@ -644,6 +547,7 @@ func (s *server) getMux() *http.ServeMux {
 	return mux
 }
 
+// Start starts the server on the given port.
 func (s *server) Start(port uint16) error {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -52,6 +53,9 @@ func (t *translator) GetLanguages(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i, l := range languages {
+		languages[i] = strings.ToLower(l)
+	}
 
 	log.Debug().Int("count", len(languages)).Strs("languages", languages).Msg("fetched languages")
 	return languages, nil
@@ -70,35 +74,36 @@ func (t *translator) Translate(ctx context.Context, text []string, sourceLanguag
 		return nil, errs.InvalidInput
 	}
 
-	log.Debug().Strs("text", text).Str("source_language", sourceLanguage).Str("target_language", targetLanguage).Msg("translating text")
-
 	// Check if the translation is already in the cache.
 	key := cache.CreateKey(append(text, sourceLanguage, targetLanguage)...)
+	log.Trace().Str("key", key).Strs("text", text).Str("source_language", sourceLanguage).Str("target_language", targetLanguage).Msg("checking cache")
 	if value, err := t.cache.GetList(ctx, key); err == nil {
+		log.Trace().Strs("text", text).Strs("translated_text", value).Msg("cache hit")
 		return value, nil
 	}
 
 	apiClient, err := newDeeplApiClient(ctx, t.store, countTextLen(text))
 	if err != nil {
+		log.Error().Err(err).Msg("failed to create DeepL API client")
 		return nil, err
 	}
 
+	log.Trace().Str("source_language", sourceLanguage).Str("target_language", targetLanguage).Strs("text", text).Msg("translating text")
 	translatedText, err := apiClient.translate(ctx, text, sourceLanguage, targetLanguage)
 	if err != nil {
 		return nil, err
 	}
 
 	go func() {
+		log.Trace().Str("key", key).Str("source_language", sourceLanguage).Str("target_language", targetLanguage).Strs("translated_text", translatedText).Msg("setting cache")
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 
-		err := t.cache.SetList(ctx, key, text, time.Hour*24)
+		err := t.cache.SetList(ctx, key, translatedText, time.Hour*24)
 		if err != nil {
 			log.Error().Err(err).Str("key", key).Msg("failed to set cache")
 		}
 	}()
-
-	log.Debug().Strs("text", text).Strs("translated_text", translatedText).Msg("translated text")
 	return translatedText, nil
 }
 

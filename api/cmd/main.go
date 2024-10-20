@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
+	"github.com/pkulik0/autocc/api/internal/autocc"
 	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/credentials"
 	"github.com/pkulik0/autocc/api/internal/oauth"
@@ -59,7 +60,9 @@ func main() {
 	youtube := youtube.New(store, cache)
 	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
 
-	server := server.New(cache, credentials, auth, youtube, translator)
+	autocc := autocc.New(translator, youtube)
+
+	server := server.New(cache, credentials, auth, youtube, translator, autocc)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

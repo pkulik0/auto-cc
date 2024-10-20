@@ -52,6 +52,21 @@
 			observer.disconnect();
 		};
 	});
+
+	let isProcessing: Map<string, boolean> = new Map();
+
+	const processVideo = async (videoId: string) => {
+		if (isProcessing.get(videoId)) {
+			return;
+		}
+		isProcessing.set(videoId, true);
+		try {
+			await process(videoId);
+		} catch (error) {
+			console.error(error);
+		}
+		isProcessing.delete(videoId);
+	};
 </script>
 
 {#if videos}
@@ -92,11 +107,15 @@
 					</div>
 
 					<div class="mt-8 space-y-2">
-						<Button on:click={() => process(video.id)} class="w-full" size="xs">
-							<CaptionOutline class="me-1 w-6" />
-							{$_('videos.closed_captions')}
+						<Button on:click={() => processVideo(video.id)} class="w-full" size="xs" outline={isProcessing.get(video.id)}>
+							{#if isProcessing.get(video.id)}
+								<Spinner class="w-4 h-4" />
+								{$_('videos.processing')}
+							{:else} 
+								<CaptionOutline class="me-1 w-6" />
+								{$_('videos.translate')}
+							{/if}
 						</Button>
-						<!-- <Button class="w-full" outline size="xs">{$_('videos.metadata')}</Button> -->
 					</div>
 				</Card>
 			</div>
