@@ -49,7 +49,7 @@ func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) (
 		videos = append(videos, &pb.Video{
 			Id:           item.Id.VideoId,
 			Title:        item.Snippet.Title,
-			ThumbnailUrl: item.Snippet.Thumbnails.Default.Url,
+			ThumbnailUrl: item.Snippet.Thumbnails.High.Url,
 			Description:  item.Snippet.Description,
 			PublishedAt:  &timestamppb.Timestamp{Seconds: publishedAt.Unix()},
 		})

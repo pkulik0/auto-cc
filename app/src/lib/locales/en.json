@@ -6,6 +6,7 @@
 		"videos": "Videos",
 		"credentials": "Credentials",
 		"settings": "Settings",
+		"logged_in_as": "Signed in as ",
 		"sign_in": "Sign In",
 		"sign_out": "Sign Out"
 	},
@@ -20,5 +21,10 @@
 		"service": "Service",
         "authenticate": "Authenticate",
         "revoke": "Revoke"
+	},
+	"videos": {
+		"closed_captions": "Closed Captions",
+		"metadata": "Metadata",
+		"no_description": "No description"
 	}
 }

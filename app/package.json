@@ -43,6 +43,7 @@
 	"type": "module",
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.2.0",
+		"@tailwindcss/line-clamp": "^0.4.4",
 		"oidc-client-ts": "^3.1.0",
 		"svelte-i18n": "^4.0.0"
 	}

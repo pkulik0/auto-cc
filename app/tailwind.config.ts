@@ -1,4 +1,5 @@
 import flowbitePlugin from 'flowbite/plugin'
+import lineClampPlugin from '@tailwindcss/line-clamp'
 
 import type { Config } from 'tailwindcss';
 
@@ -25,5 +26,5 @@ export default {
     }
 	},
 
-	plugins: [flowbitePlugin]
+	plugins: [flowbitePlugin, lineClampPlugin]
 } as Config;

@@ -193,7 +193,9 @@ export const getVideos = async (nextPageToken?: string): Promise<GetYoutubeVideo
 	}
 
 	const data = await res.arrayBuffer();
-	return GetYoutubeVideosResponse.decode(new Uint8Array(data));
+	const resp = GetYoutubeVideosResponse.decode(new Uint8Array(data));
+    resp.videos = resp.videos.filter(v => !v.description.includes('#short'));
+    return resp;
 };
 
 export const getMetadata = async (videoId: string): Promise<GetMetadataResponse> => {

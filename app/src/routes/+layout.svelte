@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import '../app.css';
 	import Footer from './Footer.svelte';
 	import Navbar from './Navbar.svelte';
 </script>
 
-<div class="flex flex-col min-h-screen">
+<div class="flex min-h-screen flex-col">
 	<Navbar />
 
-	<div class="flex-grow container mx-auto my-4">
+	<div class="container mx-auto my-4 flex-grow">
 		<div class="mx-4"><slot /></div>
 	</div>
 
