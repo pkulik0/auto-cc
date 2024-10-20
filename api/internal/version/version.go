@@ -22,8 +22,8 @@ type info struct {
 
 func Information() info {
 	return info{
-		Version:   Version,
-		BuildTime: BuildTime,
+		Version:   strings.Trim(Version, " \t\n"),
+		BuildTime: strings.Trim(BuildTime, " \t\n"),
 	}
 }
 

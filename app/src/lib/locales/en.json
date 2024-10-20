@@ -24,6 +24,7 @@
 	"videos": {
 		"closed_captions": "Closed Captions",
 		"metadata": "Metadata",
-		"no_description": "No description"
+		"no_description": "No description",
+		"no_videos": "Upload some videos to get started"
 	}
 }

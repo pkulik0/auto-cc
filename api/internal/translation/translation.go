@@ -2,13 +2,17 @@ package translation
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/pkulik0/autocc/api/internal/cache"
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/store"
 )
 
@@ -26,15 +30,17 @@ type Translator interface {
 
 type translator struct {
 	store store.Store
+	cache cache.Cache
 }
 
 var _ Translator = &translator{}
 
 // New creates a new translation service.
-func New(store store.Store) *translator {
+func New(store store.Store, cache cache.Cache) *translator {
 	log.Debug().Msg("created translation service")
 	return &translator{
 		store: store,
+		cache: cache,
 	}
 }
 
@@ -61,18 +67,26 @@ func countTextLen(text []string) uint {
 	return count
 }
 
-var (
-	ErrInvalidInput = errors.New("invalid input")
-)
+func getCacheKey(sourceLanguage, targetLanguage string, text []string) string {
+	hash := sha256.New()
+	for _, t := range text {
+		hash.Write([]byte(t))
+	}
+	return strings.Join([]string{sourceLanguage, targetLanguage, string(hash.Sum(nil))}, ":")
+}
 
 func (t *translator) Translate(ctx context.Context, text []string, sourceLanguage, targetLanguage string) ([]string, error) {
 	if len(text) == 0 || sourceLanguage == "" || targetLanguage == "" {
-		return nil, ErrInvalidInput
+		return nil, errs.InvalidInput
 	}
 
-	cost := countTextLen(text)
+	// Check if the translation is already in the cache.
+	key := getCacheKey(sourceLanguage, targetLanguage, text)
+	if value, err := t.cache.GetList(ctx, key); err == nil {
+		return value, nil
+	}
 
-	apiClient, err := newDeeplApiClient(ctx, t.store, cost)
+	apiClient, err := newDeeplApiClient(ctx, t.store, countTextLen(text))
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +95,16 @@ func (t *translator) Translate(ctx context.Context, text []string, sourceLanguag
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		err := t.cache.SetList(ctx, key, text, time.Hour*24)
+		if err != nil {
+			log.Error().Err(err).Str("key", key).Msg("failed to set cache")
+		}
+	}()
 
 	log.Debug().Strs("text", text).Strs("translated_text", translatedText).Msg("translated text")
 	return translatedText, nil

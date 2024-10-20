@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"regexp"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/oauth"
 	"github.com/pkulik0/autocc/api/internal/store"
@@ -61,13 +62,9 @@ func New(s store.Store, o oauth.Configs, t translation.Translator) *credentials 
 	}
 }
 
-var (
-	ErrInvalidInput = errors.New("invalid input")
-)
-
 func (c *credentials) AddCredentialsGoogle(ctx context.Context, clientID, clientSecret string) (*model.CredentialsGoogle, error) {
 	if clientID == "" || clientSecret == "" {
-		return nil, ErrInvalidInput
+		return nil, errs.InvalidInput
 	}
 
 	return c.store.AddCredentialsGoogle(ctx, clientID, clientSecret)
@@ -75,7 +72,7 @@ func (c *credentials) AddCredentialsGoogle(ctx context.Context, clientID, client
 
 func (c *credentials) AddCredentialsDeepL(ctx context.Context, key string) (*model.CredentialsDeepL, error) {
 	if key == "" {
-		return nil, ErrInvalidInput
+		return nil, errs.InvalidInput
 	}
 
 	usage, err := c.translation.GetUsageDeepL(ctx, key)
@@ -88,12 +85,20 @@ func (c *credentials) AddCredentialsDeepL(ctx context.Context, key string) (*mod
 
 func (c *credentials) GetCredentials(ctx context.Context) ([]model.CredentialsGoogle, []model.CredentialsDeepL, error) {
 	google, err := c.store.GetCredentialsGoogleAll(ctx)
-	if err != nil {
+	switch err {
+	case nil:
+	case gorm.ErrRecordNotFound:
+		google = []model.CredentialsGoogle{}
+	default:
 		return nil, nil, err
 	}
 
 	deepL, err := c.store.GetCredentialsDeepLAll(ctx)
-	if err != nil {
+	switch err {
+	case nil:
+	case gorm.ErrRecordNotFound:
+		deepL = []model.CredentialsDeepL{}
+	default:
 		return nil, nil, err
 	}
 
@@ -123,10 +128,10 @@ var (
 
 func (c *credentials) GetSessionGoogleURL(ctx context.Context, credentialsID uint, userID, redirectURL string) (string, error) {
 	if userID == "" {
-		return "", ErrInvalidInput
+		return "", errs.InvalidInput
 	}
 	if !urlRegex.MatchString(redirectURL) {
-		return "", ErrInvalidInput
+		return "", errs.InvalidInput
 	}
 
 	credentials, err := c.store.GetCredentialsGoogleByID(ctx, credentialsID)
@@ -149,7 +154,7 @@ func (c *credentials) GetSessionGoogleURL(ctx context.Context, credentialsID uin
 
 func (c *credentials) CreateSessionGoogle(ctx context.Context, state, code string) (string, error) {
 	if state == "" || code == "" {
-		return "", ErrInvalidInput
+		return "", errs.InvalidInput
 	}
 
 	sessionState, err := c.store.GetSessionState(ctx, state)
@@ -177,14 +182,14 @@ func (c *credentials) CreateSessionGoogle(ctx context.Context, state, code strin
 
 func (c *credentials) RemoveSessionGoogle(ctx context.Context, userID string, credentialsID uint) error {
 	if userID == "" {
-		return ErrInvalidInput
+		return errs.InvalidInput
 	}
 	return c.store.RemoveSessionGoogle(ctx, userID, credentialsID)
 }
 
 func (c *credentials) GetSessionsGoogleByUser(ctx context.Context, userID string) ([]model.SessionGoogle, error) {
 	if userID == "" {
-		return nil, ErrInvalidInput
+		return nil, errs.InvalidInput
 	}
 	return c.store.GetSessionGoogleAll(ctx, userID)
 }

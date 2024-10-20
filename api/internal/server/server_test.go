@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
-	"github.com/pkulik0/autocc/api/internal/credentials"
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/middleware"
 	"github.com/pkulik0/autocc/api/internal/mock"
 	"github.com/pkulik0/autocc/api/internal/model"
@@ -165,7 +165,7 @@ func TestAddCredentialsGoogle(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(nil, credentials.ErrInvalidInput)
+				s.EXPECT().AddCredentialsGoogle(gomock.Any(), "id", "secret").Return(nil, errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -255,7 +255,7 @@ func TestAddCredentialsDeepL(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(nil, credentials.ErrInvalidInput)
+				s.EXPECT().AddCredentialsDeepL(gomock.Any(), key).Return(nil, errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -473,7 +473,7 @@ func TestHandlerSessionGoogleURL(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("", credentials.ErrInvalidInput)
+				s.EXPECT().GetSessionGoogleURL(gomock.Any(), uint(1), "userID", "redirectURL").Return("", errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -576,7 +576,7 @@ func TestHandlerSessionGoogleCallback(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().CreateSessionGoogle(gomock.Any(), "", "").Return("", credentials.ErrInvalidInput)
+				s.EXPECT().CreateSessionGoogle(gomock.Any(), "", "").Return("", errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -653,7 +653,7 @@ func TestHandlerUserSessionsGoogle(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return(nil, credentials.ErrInvalidInput)
+				s.EXPECT().GetSessionsGoogleByUser(gomock.Any(), "userID").Return(nil, errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()
@@ -735,7 +735,7 @@ func TestHandlerRemoveSessionGoogle(t *testing.T) {
 		{
 			name: "invalid input",
 			setupMocks: func(s *mock.MockCredentials) {
-				s.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(credentials.ErrInvalidInput)
+				s.EXPECT().RemoveSessionGoogle(gomock.Any(), "userID", uint(1)).Return(errs.InvalidInput)
 			},
 			test: func(c *qt.C, server *server) {
 				w := httptest.NewRecorder()

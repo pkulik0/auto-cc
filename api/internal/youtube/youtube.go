@@ -2,18 +2,12 @@ package youtube
 
 import (
 	"context"
-	"errors"
 	"io"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/store"
-)
-
-var (
-	ErrNotFound     = errors.New("not found")
-	ErrInvalidInput = errors.New("invalid input")
 )
 
 // Youtube is an interface for the YouTube service.

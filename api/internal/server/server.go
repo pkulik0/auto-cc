@@ -14,6 +14,7 @@ import (
 	"github.com/pkulik0/autocc/api/internal/auth"
 	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/credentials"
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/helpers"
 	"github.com/pkulik0/autocc/api/internal/middleware"
 	"github.com/pkulik0/autocc/api/internal/pb"
@@ -80,7 +81,7 @@ func (s *server) handlerAddCredentialsGoogle(w http.ResponseWriter, r *http.Requ
 	cred, err := s.credentials.AddCredentialsGoogle(r.Context(), req.ClientId, req.ClientSecret)
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -102,7 +103,7 @@ func (s *server) handlerAddCredentialsDeepL(w http.ResponseWriter, r *http.Reque
 	cred, err := s.credentials.AddCredentialsDeepL(r.Context(), req.Key)
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -177,7 +178,7 @@ func (s *server) handlerSessionGoogleURL(w http.ResponseWriter, r *http.Request)
 	url, err := s.credentials.GetSessionGoogleURL(r.Context(), credentialsID, userID, redirectURL)
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -203,7 +204,7 @@ func (s *server) handlerSessionGoogleCallback(w http.ResponseWriter, r *http.Req
 	url, err := s.credentials.CreateSessionGoogle(r.Context(), state, code)
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -224,7 +225,7 @@ func (s *server) handlerUserSessionsGoogle(w http.ResponseWriter, r *http.Reques
 	sessions, err := s.credentials.GetSessionsGoogleByUser(r.Context(), userID)
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -255,7 +256,7 @@ func (s *server) handlerRemoveSessionGoogle(w http.ResponseWriter, r *http.Reque
 	err = s.credentials.RemoveSessionGoogle(r.Context(), userID, uint(credentialsID))
 	switch err {
 	case nil:
-	case credentials.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -277,7 +278,8 @@ func (s *server) handlerYoutubeVideos(w http.ResponseWriter, r *http.Request) {
 	videos, nextPageToken, err := s.youtube.GetVideos(r.Context(), userID, nextPageToken)
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.NotFound:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -304,10 +306,10 @@ func (s *server) handlerYoutubeMetadata(w http.ResponseWriter, r *http.Request) 
 	metadata, err := s.youtube.GetMetadata(r.Context(), userID, id)
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
-	case youtube.ErrNotFound:
+	case errs.NotFound:
 		helpers.ErrLog(w, err, "video not found", http.StatusNotFound)
 		return
 	default:
@@ -339,7 +341,7 @@ func (s *server) handlerYoutubeUpdateMetadata(w http.ResponseWriter, r *http.Req
 	err = s.youtube.UpdateMetadata(r.Context(), userID, id, req.Metadata)
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -362,7 +364,7 @@ func (s *server) handlerYoutubeCC(w http.ResponseWriter, r *http.Request) {
 	cc, err := s.youtube.GetClosedCaptions(r.Context(), userID, id)
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -392,7 +394,7 @@ func (s *server) handlerYoutubeUploadCC(w http.ResponseWriter, r *http.Request) 
 	ccID, err := s.youtube.UploadClosedCaptions(r.Context(), userID, req.VideoId, req.Language, strings.NewReader(req.Srt))
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -418,7 +420,7 @@ func (s *server) handlerYoutubeDownloadCC(w http.ResponseWriter, r *http.Request
 	srt, err := s.youtube.DownloadClosedCaptions(r.Context(), userID, id)
 	switch err {
 	case nil:
-	case youtube.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -455,7 +457,7 @@ func (s *server) handlerTranslatorTranslate(w http.ResponseWriter, r *http.Reque
 	text, err := s.translator.Translate(r.Context(), req.Text, req.SourceLanguage, req.TargetLanguage)
 	switch err {
 	case nil:
-	case translation.ErrInvalidInput:
+	case errs.InvalidInput:
 		helpers.ErrLog(w, err, "invalid input", http.StatusBadRequest)
 		return
 	default:
@@ -499,7 +501,7 @@ func (s *server) getMux() *http.ServeMux {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", s.handlerRoot)
-	mux.Handle("/", middleware.Auth(s.auth, middleware.Cache(s.cache, authMux)))
+	mux.Handle("/", middleware.Auth(s.auth, authMux))
 	mux.HandleFunc("GET /sessions/google/callback", s.handlerSessionGoogleCallback)
 
 	return mux

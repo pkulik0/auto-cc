@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/pkulik0/autocc/api/internal/credentials"
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/mock"
 	"github.com/pkulik0/autocc/api/internal/model"
 )
@@ -44,7 +45,7 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				_, err = s.AddCredentialsGoogle(context.Background(), "", "")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 		{
@@ -67,7 +68,7 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				_, err = s.AddCredentialsDeepL(context.Background(), "")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 		{
@@ -145,10 +146,10 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				_, err = s.GetSessionGoogleURL(context.Background(), 1, "", "http://example.com")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 
 				_, err = s.GetSessionGoogleURL(context.Background(), 1, "abc", "invalid_url")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 		{
@@ -212,7 +213,7 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				url, err = s.CreateSessionGoogle(context.Background(), "", "")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 		{
@@ -229,7 +230,7 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				err = s.RemoveSessionGoogle(context.Background(), "", 1)
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 		{
@@ -247,7 +248,7 @@ func TestService(t *testing.T) {
 				c.Assert(err, qt.Equals, retErr)
 
 				_, err = s.GetSessionsGoogleByUser(context.Background(), "")
-				c.Assert(err, qt.Equals, credentials.ErrInvalidInput)
+				c.Assert(err, qt.Equals, errs.InvalidInput)
 			},
 		},
 	}

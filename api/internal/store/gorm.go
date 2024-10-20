@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/model"
 	"github.com/pkulik0/autocc/api/internal/quota"
 )
@@ -244,7 +245,11 @@ func (s *gormStore) GetSessionGoogleByAvailableCost(ctx context.Context, userID 
 			Order("credentials_google.usage").
 			Clauses(clause.Locking{Strength: "UPDATE", Table: clause.Table{Name: "credentials_google"}}).
 			First(&session)
-		if result.Error != nil {
+		switch result.Error {
+		case nil:
+		case gorm.ErrRecordNotFound:
+			return errs.NotFound
+		default:
 			return result.Error
 		}
 

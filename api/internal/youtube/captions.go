@@ -6,6 +6,7 @@ import (
 
 	yt "google.golang.org/api/youtube/v3"
 
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/quota"
 )
@@ -16,7 +17,7 @@ const (
 
 func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string) ([]*pb.ClosedCaptionsEntry, error) {
 	if userID == "" || videoID == "" {
-		return nil, ErrInvalidInput
+		return nil, errs.InvalidInput
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsList)
@@ -42,7 +43,7 @@ func (y *youtube) GetClosedCaptions(ctx context.Context, userID, videoID string)
 
 func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID string) (string, error) {
 	if userID == "" || ccID == "" {
-		return "", ErrInvalidInput
+		return "", errs.InvalidInput
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsDownload)
@@ -65,7 +66,7 @@ func (y *youtube) DownloadClosedCaptions(ctx context.Context, userID, ccID strin
 
 func (y *youtube) UploadClosedCaptions(ctx context.Context, userID, videoID, language string, srt io.Reader) (string, error) {
 	if userID == "" || videoID == "" || language == "" || srt == nil {
-		return "", ErrInvalidInput
+		return "", errs.InvalidInput
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeCaptionsUpload)

@@ -38,7 +38,7 @@ func main() {
 		log.Info().Msg("running in development mode")
 	}
 
-	log.Info().Str("version", version.Version).Str("build_time", version.BuildTime).Msg("AutoCC API")
+	log.Info().Str("version", version.Information().Version).Str("build_time", version.Information().BuildTime).Msg("AutoCC API")
 
 	auth, err := auth.New(context.Background(), c.KeycloakURL, c.KeycloakRealm, c.KeycloakClientId, c.KeycloakClientSecret)
 	if err != nil {
@@ -50,15 +50,16 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create store")
 	}
 
-	translator := translation.New(store)
-	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
-
 	cache, err := cache.New(context.Background(), c.RedisAddr)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create cache")
 	}
 
-	server := server.New(cache, credentials, auth, youtube.New(store), translator)
+	translator := translation.New(store, cache)
+	youtube := youtube.New(store)
+	credentials := credentials.New(store, oauth.New(c.GoogleCallbackURL), translator)
+
+	server := server.New(cache, credentials, auth, youtube, translator)
 	err = server.Start(c.Port)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start server")

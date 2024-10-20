@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/pkulik0/autocc/api/internal/errs"
 	"github.com/pkulik0/autocc/api/internal/pb"
 	"github.com/pkulik0/autocc/api/internal/quota"
 )
@@ -17,7 +18,7 @@ const (
 
 func (y *youtube) GetVideos(ctx context.Context, userID, nextPageToken string) ([]*pb.Video, string, error) {
 	if userID == "" {
-		return nil, "", ErrInvalidInput
+		return nil, "", errs.InvalidInput
 	}
 
 	service, err := y.getInstance(ctx, userID, quota.YoutubeSearchList)

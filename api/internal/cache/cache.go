@@ -12,11 +12,15 @@ import (
 //
 //go:generate mockgen -destination=../mock/cache.go -package=mock . Cache
 type Cache interface {
-	// Get returns the value for the key.
+	// Get returns the value for a key.
 	Get(ctx context.Context, key string) (string, error)
+	// GetList returns the value for a key which holds a list.
+	GetList(ctx context.Context, key string) ([]string, error)
 
 	// Set sets the value for the key with expiration.
 	Set(ctx context.Context, key, value string, expiration time.Duration) error
+	// SetList assigns a list to the key with expiration.
+	SetList(ctx context.Context, key string, value []string, expiration time.Duration) error
 
 	// Del deletes the value for the key.
 	Del(ctx context.Context, key string) error
@@ -51,10 +55,30 @@ func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 	return value, nil
 }
 
+func (c *redisCache) GetList(ctx context.Context, key string) ([]string, error) {
+	value, err := c.client.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
 func (c *redisCache) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	err := c.client.Set(ctx, key, value, expiration).Err()
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (c *redisCache) SetList(ctx context.Context, key string, value []string, expiration time.Duration) error {
+	err := c.client.RPush(ctx, key, value).Err()
+	if err != nil {
+		return err
+	}
+	err = c.client.Expire(ctx, key, expiration).Err()
+	if err != nil {
+		log.Warn().Err(err).Str("key", key).Msg("failed to set expiration for key")
 	}
 	return nil
 }
