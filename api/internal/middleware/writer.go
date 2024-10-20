@@ -41,3 +41,7 @@ func (h *httpWriter) StatusCode() int {
 	}
 	return h.statusCode
 }
+
+func (h *httpWriter) Bytes() []byte {
+	return h.data.Bytes()
+}

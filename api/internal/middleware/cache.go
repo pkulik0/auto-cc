@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/pkulik0/autocc/api/internal/auth"
 	"github.com/pkulik0/autocc/api/internal/cache"
 	"github.com/pkulik0/autocc/api/internal/helpers"
+	"github.com/pkulik0/autocc/api/internal/pb"
 )
 
 var (
@@ -63,9 +65,19 @@ func nextWithCache(next http.Handler, w *httpWriter, r *http.Request, c cache.Ca
 	next.ServeHTTP(w, r)
 
 	go func() {
+		data, err := proto.Marshal(&pb.CacheEntry{
+			Data:       w.Bytes(),
+			StatusCode: int32(w.StatusCode()),
+		})
+		if err != nil {
+			helpers.ErrLog(w, err, "failed to marshal cache value", http.StatusInternalServerError)
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		if err := c.Set(ctx, key, w.data.String(), cacheDuration); err != nil {
+
+		if err := c.Set(ctx, key, string(data), cacheDuration); err != nil {
 			log.Error().Err(err).Str("key", key).Msg("failed to set cache")
 		} else {
 			log.Trace().Str("key", key).Dur("duration", cacheDuration).Msg("set cache")
@@ -105,7 +117,14 @@ func Cache(c cache.Cache, next http.Handler) http.Handler {
 			w.Header().Set("X-Cache", "HIT")
 			w.Header().Set("X-Cache-Key", key)
 
-			helpers.WriteOrLog(w, []byte(value))
+			var entry pb.CacheEntry
+			if err := proto.Unmarshal([]byte(value), &entry); err != nil {
+				helpers.ErrLog(w, err, "failed to unmarshal cache value", http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(int(entry.StatusCode))
+			helpers.WriteOrLog(w, entry.Data)
 		}
 	})
 }
