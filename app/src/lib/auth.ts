@@ -9,7 +9,7 @@ export const userManager = new UserManager({
     redirect_uri: `${baseUrl}/auth/callback`,
     post_logout_redirect_uri: `${baseUrl}/`,
     silent_redirect_uri: `${baseUrl}/auth/silent`,
-    scope: "openid profile email",
+    scope: "openid profile email offline_access",
     userStore: new WebStorageStateStore({ store: window.localStorage }),
 })
 
