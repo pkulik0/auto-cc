@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -513,5 +514,5 @@ func (s *server) Start(port uint16) error {
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Info().Str("address", addr).Msg("starting server")
-	return http.ListenAndServe(addr, middleware.Panic(middleware.Log(c.Handler(s.getMux()))))
+	return http.ListenAndServe(addr, http.TimeoutHandler(middleware.Panic(middleware.Log(c.Handler(s.getMux()))), 15*time.Second, ""))
 }
